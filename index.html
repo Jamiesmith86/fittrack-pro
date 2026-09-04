@@ -69,16 +69,41 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
 .preview-exercise{padding:10px;border:1px solid var(--line);border-radius:13px;background:rgba(255,255,255,.03);margin:7px 0}
 .preview-exercise b{display:block}
 </style>
+
+<style>
+.profile-chip{display:flex;align-items:center;gap:9px;padding:7px 10px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.055);cursor:pointer}
+.profile-avatar{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:900;background:linear-gradient(135deg,#22d3ee,#8b5cf6);color:#fff}
+.profile-name{font-weight:800;font-size:13px}
+.profile-switcher{position:fixed;inset:0;background:rgba(4,8,18,.78);backdrop-filter:blur(10px);z-index:10000;display:none;align-items:flex-end;justify-content:center;padding:16px}
+.profile-switcher.open{display:flex}
+.profile-sheet{width:min(560px,100%);background:#101827;border:1px solid var(--line);border-radius:24px;padding:18px}
+.profile-option{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px;border:1px solid var(--line);border-radius:16px;margin:8px 0;background:rgba(255,255,255,.035)}
+.profile-option.active{border-color:#22d3ee;background:rgba(34,211,238,.08)}
+.profile-option .left{display:flex;align-items:center;gap:10px}
+.profile-edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.native-ready{border:1px solid rgba(34,211,238,.35);background:linear-gradient(135deg,rgba(34,211,238,.08),rgba(139,92,246,.08))}
+</style>
+<style>
+.first-run{position:fixed;inset:0;z-index:12000;background:linear-gradient(180deg,#07101d,#0b1020);display:none;align-items:center;justify-content:center;padding:18px}
+.first-run.open{display:flex}
+.first-run-card{width:min(560px,100%);background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.035));border:1px solid var(--line);border-radius:28px;padding:22px;box-shadow:0 28px 90px rgba(0,0,0,.5)}
+.first-run-logo{width:58px;height:58px;border-radius:18px;display:grid;place-items:center;font-size:28px;background:linear-gradient(135deg,#22d3ee,#8b5cf6);margin-bottom:14px}
+.user-choice{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:18px 0}
+.user-choice button{padding:18px 12px;border-radius:18px;font-size:16px}
+.user-choice .avatar-big{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;margin:0 auto 8px;background:linear-gradient(135deg,#22d3ee,#8b5cf6);font-weight:900;font-size:20px}
+.device-badge{display:inline-flex;padding:6px 9px;border-radius:999px;background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.25);font-size:12px;font-weight:800}
+</style>
 </head>
 <body>
-<header><h1>FITTRACK <span style="color:#67e8f9">PRO</span></h1><p>Train smarter. Eat better. Progress faster.</p></header>
+<header><h1>FITTRACK <span style="color:#67e8f9">PRO</span></h1><p>Train smarter. Eat better. Progress faster.</p><div class="profile-chip" onclick="openProfileSwitcher()"><div class="profile-avatar" id="activeProfileAvatar">J</div><div><div class="small">PROFILE</div><div class="profile-name" id="activeProfileName">Jamie</div></div></div></header>
 
 <main>
 
 <section id="home" class="screen active">
+<div class="card native-ready"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><div><div class="small">HOUSEHOLD MODE</div><h2 id="householdTitle" style="margin:3px 0">Jamie + Wife</h2><p class="muted" style="margin-bottom:0">Tap the profile at the top to switch users. Your fitness data stays separate.</p></div><button class="secondary" onclick="openProfileSwitcher()">Switch</button></div></div>
   <div class="card" style="padding:10px 12px">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
-      <div><b>FitTrack Pro v24</b><div class="small">Future Workouts now has its own bottom tab.</div></div>
+      <div><b>FitTrack Pro v26</b><div class="small">Future Workouts now has its own bottom tab.</div></div>
       <span class="status-pill">UPDATED</span>
     </div>
   </div>
@@ -214,6 +239,13 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
   </div>
 </section>
 <section id="more" class="screen">
+<div class="card">
+<div class="small">HOUSEHOLD DEVICE</div>
+<h2>Primary User</h2>
+<p class="muted">This phone remembers its main user automatically.</p>
+<button class="secondary" onclick="resetDeviceUser()">Change Who Uses This Phone</button>
+</div>
+<div class="card native-ready"><div class="small">APP STORE ROADMAP</div><h2>Native App Foundation</h2><p class="muted">v25 includes Capacitor configuration for future iOS/TestFlight and Android builds.</p></div>
   <div class="card"><h2>All Features</h2>
     <button class="secondary" onclick="showScreen('coach')">🤖 AI Personal Trainer</button>
     <button class="secondary" onclick="showScreen('progress')">📈 Progress, PRs & Goal ETA</button>
@@ -247,6 +279,58 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
 </nav>
 
 <script>
+function deviceProfileConfigured(){return localStorage.getItem('fitDeviceProfileConfigured')==='yes'}
+function populateFirstRunNames(){
+  const names=getProfileNames();
+  const j=document.getElementById('setupNameJamie'),w=document.getElementById('setupNameWife');
+  const ja=document.getElementById('setupAvatarJamie'),wa=document.getElementById('setupAvatarWife');
+  if(j)j.textContent=names.jamie;if(w)w.textContent=names.wife;
+  if(ja)ja.textContent=names.jamie.charAt(0).toUpperCase();if(wa)wa.textContent=names.wife.charAt(0).toUpperCase();
+}
+window.finishDeviceSetup=function(id){
+  if(!['jamie','wife'].includes(id))return;
+  localStorage.setItem('fitActiveProfile',id);
+  localStorage.setItem('fitDeviceProfileConfigured','yes');
+  window.__fitProfileId=id;
+  const el=document.getElementById('firstRunSetup');if(el)el.classList.remove('open');
+  updateActiveProfileUI();
+  location.reload();
+};
+function maybeShowFirstRun(){
+  populateFirstRunNames();
+  const el=document.getElementById('firstRunSetup');
+  if(el && !deviceProfileConfigured()) el.classList.add('open');
+}
+window.resetDeviceUser=function(){
+  localStorage.removeItem('fitDeviceProfileConfigured');
+  const el=document.getElementById('firstRunSetup');
+  populateFirstRunNames();
+  if(el)el.classList.add('open');
+};
+
+
+const PROFILE_GLOBAL_KEYS=new Set(['fitActiveProfile','fitProfileNames']);
+function activeProfileId(){return window.__fitProfileId||localStorage.getItem('fitActiveProfile')||'jamie'}
+function profileKey(k){return PROFILE_GLOBAL_KEYS.has(k)?k:(String(k).indexOf('fit')===0?'profile:'+activeProfileId()+':'+k:k)}
+const profileStorage={getItem:k=>localStorage.getItem(profileKey(k)),setItem:(k,v)=>localStorage.setItem(profileKey(k),v),removeItem:k=>localStorage.removeItem(profileKey(k))};
+function getProfileNames(){try{let x=JSON.parse(localStorage.getItem('fitProfileNames')||'{}');return{jamie:x.jamie||'Jamie',wife:x.wife||'Wife'}}catch(e){return{jamie:'Jamie',wife:'Wife'}}}
+window.__fitProfileId=localStorage.getItem('fitActiveProfile')||'jamie';
+window.openProfileSwitcher=function(){renderProfileOptions();document.getElementById('profileSwitcher').classList.add('open')};
+window.closeProfileSwitcher=function(){document.getElementById('profileSwitcher').classList.remove('open')};
+window.renderProfileOptions=function(){
+ const names=getProfileNames(),active=activeProfileId(),el=document.getElementById('profileOptions');if(!el)return;
+ el.innerHTML=['jamie','wife'].map(function(id){
+   const n=names[id];
+   const click="switchProfile('"+id+"')";
+   return `<div class="profile-option ${id===active?'active':''}"><div class="left"><div class="profile-avatar">${n.charAt(0).toUpperCase()}</div><div><b>${n}</b><div class="small">${id===active?'Currently active':'Separate fitness profile'}</div></div></div><button class="secondary" onclick="${click}">${id===active?'Active':'Use Profile'}</button></div>`;
+ }).join('');
+ document.getElementById('profileNameJamie').value=names.jamie;
+ document.getElementById('profileNameWife').value=names.wife;
+};
+window.saveProfileNames=function(){const names={jamie:(document.getElementById('profileNameJamie').value||'Jamie').trim(),wife:(document.getElementById('profileNameWife').value||'Wife').trim()};localStorage.setItem('fitProfileNames',JSON.stringify(names));updateActiveProfileUI();renderProfileOptions();};
+window.switchProfile=function(id){if(!['jamie','wife'].includes(id))return;localStorage.setItem('fitActiveProfile',id);window.__fitProfileId=id;location.reload();};
+function updateActiveProfileUI(){const names=getProfileNames(),id=activeProfileId(),n=names[id];const a=document.getElementById('activeProfileName'),b=document.getElementById('activeProfileAvatar'),h=document.getElementById('householdTitle');if(a)a.textContent=n;if(b)b.textContent=n.charAt(0).toUpperCase();if(h)h.textContent=names.jamie+' + '+names.wife;}
+
 (function(){
 'use strict';
 
@@ -278,7 +362,7 @@ var exercises=[];
 
 var videoUrls={};
 var sessionVideos={};
-try{videoUrls=JSON.parse(localStorage.getItem('fitVideoUrls')||'{}')||{}}catch(e){videoUrls={}}
+try{videoUrls=JSON.parse(profileStorage.getItem('fitVideoUrls')||'{}')||{}}catch(e){videoUrls={}}
 
 var messages=[
  "You’re one workout away from keeping your streak alive. Get it done 💪",
@@ -441,13 +525,13 @@ window.saveVideoUrl=function(i){
  var name=exercises[i][0], el=document.getElementById('url_'+i), url=el.value.trim();
  if(!url){alert('Paste a direct video URL first.');return}
  videoUrls[name]=url;
- try{localStorage.setItem('fitVideoUrls',JSON.stringify(videoUrls))}catch(e){}
+ try{profileStorage.setItem('fitVideoUrls',JSON.stringify(videoUrls))}catch(e){}
  renderVideoManager();renderWorkout();
 };
 window.removeVideo=function(i){
  var name=exercises[i][0];
  if(sessionVideos[name]){try{URL.revokeObjectURL(sessionVideos[name])}catch(e){} delete sessionVideos[name]}
- delete videoUrls[name];try{localStorage.setItem('fitVideoUrls',JSON.stringify(videoUrls))}catch(e){}
+ delete videoUrls[name];try{profileStorage.setItem('fitVideoUrls',JSON.stringify(videoUrls))}catch(e){}
  renderVideoManager();renderWorkout();
 };
 window.attachVideo=function(i,input){
@@ -526,8 +610,8 @@ window.progressionDemo=function(){document.getElementById('progressionResult').t
 window.savePR=function(){
  var exn=document.getElementById('prExercise').value,w=Number(document.getElementById('prWeight').value),r=Number(document.getElementById('prReps').value);
  if(!w||!r)return;
- var e1=w*(1+r/30),key='fitPR_'+exn,best=Number(localStorage.getItem(key)||0);
- if(e1>best){localStorage.setItem(key,String(e1));document.getElementById('prResult').textContent='🏆 New PR! Estimated 1RM: '+e1.toFixed(1)+' kg';}
+ var e1=w*(1+r/30),key='fitPR_'+exn,best=Number(profileStorage.getItem(key)||0);
+ if(e1>best){profileStorage.setItem(key,String(e1));document.getElementById('prResult').textContent='🏆 New PR! Estimated 1RM: '+e1.toFixed(1)+' kg';}
  else document.getElementById('prResult').textContent='Estimated 1RM: '+e1.toFixed(1)+' kg. Current best: '+best.toFixed(1)+' kg';
 };
 window.calcETA=function(){
@@ -546,10 +630,10 @@ window.restaurantCoach=function(){
 window.shoppingList=function(){document.getElementById('shoppingResult').textContent='Weekly list: chicken breast, lean mince, eggs, Greek yoghurt, whey, rice, oats, wraps, potatoes, frozen vegetables, salad, berries, bananas, olive oil and seasoning.'};
 
 window.joinChallenge=function(n){
- localStorage.setItem('fitChallenge',n);document.getElementById('challengeResult').textContent='Joined: '+n+' 🏆';
- var xp=Number(localStorage.getItem('fitXP')||420)+25;localStorage.setItem('fitXP',xp);updateXP();
+ profileStorage.setItem('fitChallenge',n);document.getElementById('challengeResult').textContent='Joined: '+n+' 🏆';
+ var xp=Number(profileStorage.getItem('fitXP')||420)+25;profileStorage.setItem('fitXP',xp);updateXP();
 };
-function updateXP(){var xp=Number(localStorage.getItem('fitXP')||420);document.getElementById('xpNum').textContent=xp;document.getElementById('levelNum').textContent=Math.floor(xp/100);document.getElementById('xpBar').style.width=(xp%100)+'%'}
+function updateXP(){var xp=Number(profileStorage.getItem('fitXP')||420);document.getElementById('xpNum').textContent=xp;document.getElementById('levelNum').textContent=Math.floor(xp/100);document.getElementById('xpBar').style.width=(xp%100)+'%'}
 window.friendChallenge=function(){var n=document.getElementById('friendName').value.trim();document.getElementById('friendResult').textContent=n?'Challenge prepared for '+n+'. Real invites require cloud accounts.':'Enter a friend name first.'};
 
 window.connectWatch=function(type){
@@ -579,14 +663,14 @@ window.forceAppRefresh=function(){
    }).then(function(){
      if('caches' in window){
        return caches.keys().then(function(keys){
-         return Promise.all(keys.filter(function(k){return k.indexOf('fittrack-pro-v24')<0}).map(function(k){return caches.delete(k)}));
+         return Promise.all(keys.filter(function(k){return k.indexOf('fittrack-pro-v26')<0}).map(function(k){return caches.delete(k)}));
        });
      }
    }).then(function(){location.reload(true)}).catch(function(){location.reload(true)});
  } else { location.reload(true); }
 };
 function boot(){
- try{loadTodayPlan();renderWeeklySchedule();renderWorkout();renderVideoManager();renderShop();drawTimer();calcRecovery();updateXP();updateDailyCoach();renderFutureDays()}
+ try{updateActiveProfileUI();loadTodayPlan();renderWeeklySchedule();renderWorkout();renderVideoManager();renderShop();drawTimer();calcRecovery();updateXP();updateDailyCoach();renderFutureDays();maybeShowFirstRun()}
  catch(err){
    var b=document.createElement('div');b.style.cssText='position:fixed;left:10px;right:10px;top:90px;z-index:999;background:#7f1d1d;color:white;padding:12px;border-radius:12px';
    b.textContent='FitTrack startup error: '+err.message;document.body.appendChild(b);
@@ -607,6 +691,25 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   }
 })();
 </script>
+
+<div id="profileSwitcher" class="profile-switcher" onclick="if(event.target===this)closeProfileSwitcher()"><div class="profile-sheet">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><div><div class="small">FITTRACK HOUSEHOLD</div><h2 style="margin:2px 0">Who is training?</h2></div><button class="secondary" onclick="closeProfileSwitcher()">Close</button></div>
+<div id="profileOptions"></div>
+<div class="card" style="margin-top:12px"><h3>Edit profile names</h3><div class="profile-edit-grid"><input id="profileNameJamie" placeholder="Profile 1 name"><input id="profileNameWife" placeholder="Profile 2 name"></div><button onclick="saveProfileNames()" style="margin-top:10px">Save Names</button></div>
+<p class="small muted">Each profile keeps separate FitTrack data on this device.</p></div></div>
+<div id="firstRunSetup" class="first-run">
+  <div class="first-run-card">
+    <div class="first-run-logo">⚡</div>
+    <div class="device-badge">FITTRACK HOUSEHOLD</div>
+    <h1 style="margin:10px 0 6px">Who is using this phone?</h1>
+    <p class="muted">Choose the main user for this device. FitTrack will remember the choice and open straight into that person's fitness data next time.</p>
+    <div class="user-choice">
+      <button onclick="finishDeviceSetup('jamie')"><div class="avatar-big" id="setupAvatarJamie">J</div><b id="setupNameJamie">Jamie</b><br><span class="small">Use on this phone</span></button>
+      <button onclick="finishDeviceSetup('wife')"><div class="avatar-big" id="setupAvatarWife">W</div><b id="setupNameWife">Wife</b><br><span class="small">Use on this phone</span></button>
+    </div>
+    <div class="note">You can still switch users later by tapping the profile button at the top of the app.</div>
+  </div>
+</div>
 
 </body>
 </html>
