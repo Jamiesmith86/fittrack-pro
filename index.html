@@ -100,10 +100,11 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
 <main>
 
 <section id="home" class="screen active">
+<div class="card" style="border:1px solid #7c6cff"><div class="small">PERSONALISED TRAINING</div><h2>✨ AI Workout Generator</h2><p class="muted">Build a weekly program around your goal, training days, equipment and available time.</p><button onclick="showScreen('aiBuilder')">Build My Workout Program</button></div>
 <div class="card native-ready"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><div><div class="small">HOUSEHOLD MODE</div><h2 id="householdTitle" style="margin:3px 0">Jamie + Wife</h2><p class="muted" style="margin-bottom:0">Tap the profile at the top to switch users. Your fitness data stays separate.</p></div><button class="secondary" onclick="openProfileSwitcher()">Switch</button></div></div>
   <div class="card" style="padding:10px 12px">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
-      <div><b>FitTrack Pro v26</b><div class="small">Future Workouts now has its own bottom tab.</div></div>
+      <div><b>FitTrack Pro v27</b><div class="small">Future Workouts now has its own bottom tab.</div></div>
       <span class="status-pill">UPDATED</span>
     </div>
   </div>
@@ -141,6 +142,7 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
 
 
 <section id="workout" class="screen">
+<div class="card"><h2>✨ AI Workout Generator</h2><button class="secondary" onclick="showScreen('aiBuilder')">Generate My Program</button></div>
   <div class="card hero">
     <span class="status-pill" id="dayTypeBadge">TRAINING DAY</span>
     <h2 id="workoutDayTitle" style="margin-top:8px">Today’s Workout</h2>
@@ -217,7 +219,19 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
 </section>
 
 
-<section id="future" class="screen">
+<section id="aiBuilder" class="screen">
+<div class="card hero"><span class="status-pill">PERSONALISED</span><h2>✨ AI Workout Generator</h2><p>Creates a program for the active household profile.</p></div>
+<div class="card">
+<label>Goal<select id="aiGoal"><option>Build Muscle + Lose Fat</option><option>Build Muscle</option><option>Lose Fat</option><option>Strength</option><option>General Fitness</option></select></label>
+<label>Experience<select id="aiExperience"><option>Beginner</option><option selected>Intermediate</option><option>Advanced</option></select></label>
+<label>Training days<select id="aiDays"><option>3</option><option>4</option><option selected>5</option><option>6</option></select></label>
+<label>Equipment<select id="aiEquipment"><option>Full Gym</option><option>Dumbbells Only</option><option>Home Gym</option><option>Bodyweight</option></select></label>
+<label>Session length<select id="aiLength"><option>30</option><option>45</option><option selected>60</option><option>75</option><option>90</option></select></label>
+<label>Focus areas<input id="aiFocus" placeholder="Chest, shoulders, glutes..."></label>
+<label>Exercises / limitations to avoid<input id="aiAvoid" placeholder="e.g. barbell squat"></label>
+<button onclick="generateAIProgram()">✨ Generate Program</button></div>
+<div class="card" id="aiResultCard" style="display:none"><h2>Your Program</h2><p id="aiSummary" class="muted"></p><div id="aiPlan"></div><button onclick="saveAIProgram()">Save as My Program</button><button class="secondary" onclick="generateAIProgram()">Regenerate</button></div>
+</section><section id="future" class="screen">
   <div class="card hero">
     <span class="status-pill">PLAN AHEAD</span>
     <h2 style="margin-top:8px">Future Workouts</h2>
@@ -663,12 +677,32 @@ window.forceAppRefresh=function(){
    }).then(function(){
      if('caches' in window){
        return caches.keys().then(function(keys){
-         return Promise.all(keys.filter(function(k){return k.indexOf('fittrack-pro-v26')<0}).map(function(k){return caches.delete(k)}));
+         return Promise.all(keys.filter(function(k){return k.indexOf('fittrack-pro-v27')<0}).map(function(k){return caches.delete(k)}));
        });
      }
    }).then(function(){location.reload(true)}).catch(function(){location.reload(true)});
  } else { location.reload(true); }
 };
+
+var generatedAIProgram=null;
+window.generateAIProgram=function(){
+ var goal=document.getElementById('aiGoal').value,days=+document.getElementById('aiDays').value,equip=document.getElementById('aiEquipment').value,len=+document.getElementById('aiLength').value,exp=document.getElementById('aiExperience').value,focus=document.getElementById('aiFocus').value||'balanced development';
+ var pools={
+ Push:[['Bench Press',4,'6–8'],['Incline Dumbbell Press',3,'8–12'],['Shoulder Press',3,'8–10'],['Lateral Raise',4,'12–20'],['Tricep Pushdown',3,'10–15']],
+ Pull:[['Lat Pulldown',4,'6–10'],['Chest-Supported Row',4,'8–10'],['Cable Row',3,'10–12'],['EZ-Bar Curl',3,'8–12'],['Hammer Curl',3,'10–15']],
+ Legs:[['Squat / Hack Squat',4,'6–8'],['Romanian Deadlift',3,'8–10'],['Leg Press',3,'10–12'],['Leg Curl',3,'10–15'],['Calf Raise',4,'10–15']],
+ Upper:[['Incline Dumbbell Press',3,'6–10'],['Lat Pulldown',3,'8–12'],['Bench Press',3,'8–12'],['Chest-Supported Row',3,'8–12'],['Lateral Raise',4,'12–20']],
+ 'Lower + Arms':[['Romanian Deadlift',3,'6–8'],['Hack Squat',3,'8–10'],['Bulgarian Split Squat',3,'8–12'],['Leg Curl',3,'10–15'],['Hammer Curl',3,'10–15']]
+ };
+ var schedules=days===3?[['Monday','Upper'],['Wednesday','Legs'],['Friday','Upper']]:days===4?[['Monday','Upper'],['Tuesday','Legs'],['Thursday','Upper'],['Saturday','Lower + Arms']]:days===5?[['Monday','Push'],['Tuesday','Pull'],['Thursday','Legs'],['Friday','Upper'],['Saturday','Lower + Arms']]:[['Monday','Push'],['Tuesday','Pull'],['Wednesday','Legs'],['Friday','Push'],['Saturday','Pull'],['Sunday','Legs']];
+ var max=len<=30?3:len<=45?4:5;
+ var program=schedules.map(function(x){return{day:x[0],name:x[1],exercises:pools[x[1]].slice(0,max)}});
+ generatedAIProgram={goal:goal,days:days,equipment:equip,length:len,experience:exp,focus:focus,program:program};
+ document.getElementById('aiSummary').textContent=days+'-day '+goal+' • '+equip+' • '+len+' min • '+exp+' • Focus: '+focus+'. Rest days are spaced through the week.';
+ document.getElementById('aiPlan').innerHTML=program.map(function(d){return '<div class="card"><b>'+d.day+' — '+d.name+'</b>'+d.exercises.map(function(e){return '<p>'+e[0]+' — '+e[1]+' × '+e[2]+' • 1–2 RIR</p>'}).join('')+'</div>'}).join('');
+ document.getElementById('aiResultCard').style.display='block';
+};
+window.saveAIProgram=function(){if(!generatedAIProgram)return;profileStorage.setItem('fitAIProgram',JSON.stringify(generatedAIProgram));alert('Program saved to this household profile.')};
 function boot(){
  try{updateActiveProfileUI();loadTodayPlan();renderWeeklySchedule();renderWorkout();renderVideoManager();renderShop();drawTimer();calcRecovery();updateXP();updateDailyCoach();renderFutureDays();maybeShowFirstRun()}
  catch(err){
