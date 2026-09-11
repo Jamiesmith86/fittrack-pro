@@ -1,15 +1,36 @@
-FITTRACK PRO v32 — STRUCTURED CLOUD
+FITTRACK PRO v33 — REAL AI COACH
 
-IMPORTANT: Before using the new 'Sync My Data' button, run SUPABASE_V32_SETUP.sql once in Supabase SQL Editor.
+WHAT'S NEW
+- Real AI Coach screen
+- Daily Coach
+- Workout adjustment
+- Weekly AI review
+- Nutrition Coach
+- Sends authenticated requests to a Supabase Edge Function
+- The function reads the signed-in customer's own profile, workout history, PRs and meal plan
+- AI provider API key stays server-side and never appears in GitHub/index.html
+- AI-created workout can be applied to the active workout
+- v32 structured cloud and all prior features retained
 
-v32 adds separate protected cloud tables for:
-- User profile/preferences
-- Completed workouts
-- Personal records
-- Healthy meal plan
+IMPORTANT
+The app UI is ready immediately, but the AI button will show "AI setup required" until the
+Supabase Edge Function is deployed and provider secrets are configured.
 
-The original whole-app cloud backup is retained as a safety backup.
+FILES FOR GITHUB PAGES
+- index.html
+- manifest.webmanifest
+- sw.js
 
-GitHub Pages:
-Replace index.html, manifest.webmanifest and sw.js, then commit.
-Do NOT upload the SQL file to GitHub; run it in Supabase SQL Editor.
+SUPABASE EDGE FUNCTION
+Source:
+supabase/functions/fittrack-ai-coach/index.ts
+
+Server secrets required:
+AI_PROVIDER_URL
+AI_PROVIDER_API_KEY
+AI_MODEL
+
+AI_PROVIDER_URL is expected to be a complete OpenAI-compatible chat-completions endpoint.
+Choose your provider/model separately and keep credentials only in Supabase secrets.
+
+No database SQL changes are required for v33; it uses the v32 structured tables.
