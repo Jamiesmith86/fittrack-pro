@@ -213,7 +213,7 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
 <div class="card native-ready"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><div><div class="small">HOUSEHOLD MODE</div><h2 id="householdTitle" style="margin:3px 0">Jamie + Wife</h2><p class="muted" style="margin-bottom:0">Tap the profile at the top to switch users. Your fitness data stays separate.</p></div><button class="secondary" onclick="openProfileSwitcher()">Switch</button></div></div>
   <div class="card" style="padding:10px 12px">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
-      <div><b>FitTrack Pro v35</b><div class="small">Future Workouts now has its own bottom tab.</div></div>
+      <div><b>FitTrack Pro v35.1</b><div class="small">Future Workouts now has its own bottom tab.</div></div>
       <span class="status-pill">UPDATED</span>
     </div>
   </div>
@@ -319,7 +319,7 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
  <div class="card adaptive-card">
  <h2>🎯 Adaptive Training</h2>
  <p class="muted">FitTrack reviews completed sets, reps, RIR and recent history to recommend what to progress next time.</p>
- <div id="adaptiveStatus" class="small">Complete a workout to generate your next-session progression.</div>
+ <div id="adaptiveStatus" class="small">Complete a workout to generate your next-session progression.</div><div id="progressionPlanPanel" style="display:none;margin-top:14px"></div>
  <button onclick="runAdaptiveReview()">Analyse My Latest Workout</button>
 </div>
 <div class="card">
@@ -506,7 +506,7 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
     <button class="secondary" onclick="testNotif()">Send Test Notification</button>
   </div>
   <div class="card"><h2>App Update</h2>
-<p class="muted">Current version: <b>v35</b>. If the Home Screen app ever shows an older layout, close it fully and reopen. This build uses a new service-worker cache so iPhone should fetch the latest files.</p>
+<p class="muted">Current version: <b>v35.1</b>. If the Home Screen app ever shows an older layout, close it fully and reopen. This build uses a new service-worker cache so iPhone should fetch the latest files.</p>
 <button class="secondary" onclick="forceAppRefresh()">Refresh App Version</button>
 </div>
 <div class="card"><h2>Connected Features</h2><p class="muted">Real AI, food recognition, form analysis, live payments, cloud accounts, social features, push notifications and smartwatch syncing need secure production services. Apple Watch / Health requires native HealthKit integration; Garmin, Fitbit and similar platforms require their supported APIs and user authorization.</p></div>
@@ -918,6 +918,17 @@ function normExerciseName(s){return String(s||'').toLowerCase().replace(/[^a-z0-
 function getAcceptedProgression(){
  try{return JSON.parse(profileStorage.getItem('fitAcceptedProgressionPlan')||'null')}catch(e){return null}
 }
+
+function renderProgressionPlan(text,plan){
+ var box=document.getElementById('progressionPlanPanel'); if(!box)return;
+ var html='<div class="adaptive-output"><div style="font-weight:800;font-size:18px;margin-bottom:8px">AI Workout Review</div><div style="white-space:pre-wrap">'+escapeHtml(text||'')+'</div></div>';
+ if(Array.isArray(plan)&&plan.length){
+  html+='<div style="font-weight:800;font-size:18px;margin:16px 0 8px">Next Session Targets</div>';
+  plan.forEach(function(x){html+='<div class="card" style="margin:8px 0;padding:12px"><div style="font-weight:800">'+escapeHtml(x.exercise||'Exercise')+'</div><div style="font-size:18px;margin-top:5px">🎯 '+escapeHtml(x.target_weight??'—')+' kg × '+escapeHtml(x.target_reps??'—')+(x.target_sets?' × '+escapeHtml(x.target_sets)+' sets':'')+'</div>'+(x.reason?'<div class="small muted" style="margin-top:5px">'+escapeHtml(x.reason)+'</div>':'')+'</div>';});
+  html+='<button style="width:100%;font-size:17px;font-weight:900;margin-top:10px;padding:14px" onclick="acceptAIProgressionPlan()">✓ ACCEPT AI PLAN</button>';
+ }else{html+='<div class="card" style="margin-top:12px"><b>No structured targets were returned.</b><div class="small muted" style="margin-top:5px">Run the analysis again. FitTrack is showing the full AI response above for diagnosis.</div></div>';}
+ box.innerHTML=html;box.style.display='block';
+}
 window.acceptAIProgressionPlan=function(){
  try{
   var p=JSON.parse(profileStorage.getItem('fitPendingProgressionPlan')||'null');
@@ -954,7 +965,8 @@ window.runAdaptiveReview=async function(auto){
   var plan=Array.isArray(d.progression_plan)?d.progression_plan:[];
   profileStorage.setItem('fitAdaptiveLastReview',JSON.stringify({workout_id:w.id,created_at:new Date().toISOString(),coaching:text,progression_plan:plan}));
   profileStorage.setItem('fitPendingProgressionPlan',JSON.stringify({routine:w.routine,source_workout_id:w.id,created_at:new Date().toISOString(),items:plan}));
-  adaptiveStatus('✓ Latest workout analysed. Review the plan, then accept it to activate next-session targets.');
+  adaptiveStatus('✓ Latest workout analysed. Review the plan below, then accept it to activate next-session targets.');
+  renderProgressionPlan(text,plan);
   var out=document.getElementById('realAIOutput');
   if(out){out.innerHTML='<div style="white-space:pre-wrap">'+escapeHtml(text)+'</div>'+(plan.length?'<button style="margin-top:12px" onclick="acceptAIProgressionPlan()">✓ Accept AI Plan</button>':'');}
   if(post&&auto){post.style.display='block';post.innerHTML='<div style="white-space:pre-wrap">'+escapeHtml(text)+'</div>'+(plan.length?'<button style="margin-top:12px" onclick="acceptAIProgressionPlan()">✓ Accept AI Plan</button>':'');}
@@ -1148,7 +1160,7 @@ window.forceAppRefresh=function(){
    }).then(function(){
      if('caches' in window){
        return caches.keys().then(function(keys){
-         return Promise.all(keys.filter(function(k){return k.indexOf('fittrack-pro-v35')<0}).map(function(k){return caches.delete(k)}));
+         return Promise.all(keys.filter(function(k){return k.indexOf('fittrack-pro-v35-1')<0}).map(function(k){return caches.delete(k)}));
        });
      }
    }).then(function(){location.reload(true)}).catch(function(){location.reload(true)});
