@@ -236,7 +236,7 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
 <div class="card native-ready"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><div><div class="small">HOUSEHOLD MODE</div><h2 id="householdTitle" style="margin:3px 0">Jamie + Wife</h2><p class="muted" style="margin-bottom:0">Tap the profile at the top to switch users. Your fitness data stays separate.</p></div><button class="secondary" onclick="openProfileSwitcher()">Switch</button></div></div>
   <div class="card" style="padding:10px 12px">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
-      <div><b>FitTrack Pro v37</b><div class="small">Future Workouts now has its own bottom tab.</div></div>
+      <div><b>FitTrack Pro v38</b><div class="small">Future Workouts now has its own bottom tab.</div></div>
       <span class="status-pill">UPDATED</span>
     </div>
   </div>
@@ -378,7 +378,7 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
   <div class="card"><h2>Recent Sessions</h2><div id="historyList" class="muted">Complete your first workout to start your history.</div></div>
 </section>
 <section id="progress" class="screen">
-  <div class="card hero"><span class="status-pill">V37 BODY TRANSFORMATION</span><h2 style="margin-top:8px">📈 Progress & Body Transformation</h2><p>Track body weight, measurements, photos and strength together — not the scale alone.</p></div>
+  <div class="card hero"><span class="status-pill">V38 BODY TRANSFORMATION + CLOUD</span><h2 style="margin-top:8px">📈 Progress & Body Transformation</h2><p>Track body weight, measurements, photos and strength together — not the scale alone.</p></div>
 
   <div class="card">
     <h2>Transformation Dashboard</h2>
@@ -428,7 +428,7 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
 
   <div class="card">
     <h2>📷 Progress Photos</h2>
-    <p class="muted">Add a front, side or back photo. v37 stores compressed photos on this device/profile. Cloud photo storage will come later.</p>
+    <p class="muted">Add a front, side or back photo. v38 keeps a local copy for speed and can securely back it up to your private FitTrack cloud storage.</p>
     <div class="row2">
       <div><label>View</label><select id="photoView"><option>Front</option><option>Side</option><option>Back</option></select></div>
       <div><label>Date</label><input id="photoDate" type="date"></div>
@@ -453,6 +453,17 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
     <button onclick="runTransformationAIReview()">Analyse My Progress</button>
     <div id="transformationAIStatus" class="auth-msg">Ready.</div>
     <div id="transformationAIOutput" class="ai-output muted">Your weekly body + training review will appear here.</div>
+  </div>
+
+  <div class="card ai-pro-card">
+    <div class="pro-pill">V38 CLOUD</div>
+    <h2>☁️ Transformation Cloud Sync</h2>
+    <p class="muted">Back up body measurements and progress-photo metadata to your FitTrack account. Progress-photo files are stored privately in your own Supabase Storage folder.</p>
+    <div class="row2">
+      <button onclick="syncTransformationCloud()">☁️ Sync Transformation Data</button>
+      <button class="secondary" onclick="restoreTransformationCloud()">↻ Restore From Cloud</button>
+    </div>
+    <div id="transformationCloudStatus" class="auth-msg">Ready.</div>
   </div>
 
   <div class="card">
@@ -1618,6 +1629,76 @@ window.suggestBusyGymSwap=function(){
  }
 };
 
+
+
+function fitCloudClient(){
+ try{return (typeof supabase!=='undefined'&&supabase)?supabase:null}catch(e){return null}
+}
+async function fitCloudUser(){
+ var c=fitCloudClient();if(!c)return null;
+ try{var r=await c.auth.getUser();return r&&r.data&&r.data.user?r.data.user:null}catch(e){return null}
+}
+function cloudStatus(msg,bad){
+ var el=document.getElementById('transformationCloudStatus');if(!el)return;
+ el.textContent=msg;el.className='auth-msg '+(bad?'error':'ok');
+}
+function dataUrlToBlob(dataUrl){
+ var p=String(dataUrl||'').split(','),mime=((p[0]||'').match(/:(.*?);/)||[])[1]||'image/jpeg';
+ var bin=atob(p[1]||''),a=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);
+ return new Blob([a],{type:mime});
+}
+function photoCloudPath(uid,p){
+ var safeView=String(p.view||'progress').toLowerCase().replace(/[^a-z0-9]+/g,'-');
+ return uid+'/'+String(p.date||isoToday())+'_'+String(p.id||Date.now())+'_'+safeView+'.jpg';
+}
+async function uploadProgressPhotosToCloud(c,user){
+ var photos=getProgressPhotos(),meta=[];
+ for(var i=0;i<photos.length;i++){
+   var p=photos[i],path=p.cloud_path||photoCloudPath(user.id,p);
+   if(p.data){
+     var up=await c.storage.from('progress-photos').upload(path,dataUrlToBlob(p.data),{contentType:'image/jpeg',upsert:true});
+     if(up.error)throw new Error('Photo upload failed: '+up.error.message);
+   }
+   p.cloud_path=path;
+   meta.push({id:p.id,date:p.date,view:p.view,cloud_path:path});
+ }
+ setProgressPhotos(photos);
+ return meta;
+}
+async function downloadProgressPhotosFromCloud(c,meta){
+ var local=[];
+ for(var i=0;i<(meta||[]).length;i++){
+   var p=meta[i];if(!p.cloud_path)continue;
+   var dl=await c.storage.from('progress-photos').download(p.cloud_path);
+   if(dl.error)continue;
+   var data=await new Promise(function(resolve){var r=new FileReader();r.onload=()=>resolve(r.result);r.readAsDataURL(dl.data)});
+   local.push({id:p.id,date:p.date,view:p.view,cloud_path:p.cloud_path,data:data});
+ }
+ if(local.length)setProgressPhotos(local);
+}
+window.syncTransformationCloud=async function(){
+ var c=fitCloudClient(),user=await fitCloudUser();if(!c||!user){cloudStatus('Please sign in to FitTrack Cloud first.',true);return}
+ cloudStatus('Syncing transformation data and photos…',false);
+ try{
+   var photoMeta=await uploadProgressPhotosToCloud(c,user);
+   var payload={user_id:user.id,body_progress:getBodyProgress(),photo_metadata:photoMeta,updated_at:new Date().toISOString()};
+   var q=await c.from('fittrack_body_progress').upsert(payload,{onConflict:'user_id'});
+   if(q.error)throw new Error(q.error.message);
+   cloudStatus('✓ Transformation cloud sync complete.',false);
+ }catch(e){cloudStatus('Cloud sync failed: '+e.message,true)}
+};
+window.restoreTransformationCloud=async function(){
+ var c=fitCloudClient(),user=await fitCloudUser();if(!c||!user){cloudStatus('Please sign in to FitTrack Cloud first.',true);return}
+ cloudStatus('Restoring transformation data…',false);
+ try{
+   var q=await c.from('fittrack_body_progress').select('body_progress,photo_metadata,updated_at').eq('user_id',user.id).maybeSingle();
+   if(q.error)throw new Error(q.error.message);
+   if(!q.data){cloudStatus('No transformation backup found for this account.',true);return}
+   if(Array.isArray(q.data.body_progress))setBodyProgress(q.data.body_progress);
+   await downloadProgressPhotosFromCloud(c,q.data.photo_metadata||[]);
+   renderBodyProgress();cloudStatus('✓ Transformation data restored from cloud.',false);
+ }catch(e){cloudStatus('Restore failed: '+e.message,true)}
+};
 
 function getBodyProgress(){try{return JSON.parse(profileStorage.getItem('fitBodyProgress')||'[]')}catch(e){return []}}
 function setBodyProgress(x){profileStorage.setItem('fitBodyProgress',JSON.stringify(x))}
