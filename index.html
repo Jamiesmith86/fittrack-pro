@@ -213,7 +213,7 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
 <div class="card native-ready"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><div><div class="small">HOUSEHOLD MODE</div><h2 id="householdTitle" style="margin:3px 0">Jamie + Wife</h2><p class="muted" style="margin-bottom:0">Tap the profile at the top to switch users. Your fitness data stays separate.</p></div><button class="secondary" onclick="openProfileSwitcher()">Switch</button></div></div>
   <div class="card" style="padding:10px 12px">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
-      <div><b>FitTrack Pro v34.1</b><div class="small">Future Workouts now has its own bottom tab.</div></div>
+      <div><b>FitTrack Pro v35</b><div class="small">Future Workouts now has its own bottom tab.</div></div>
       <span class="status-pill">UPDATED</span>
     </div>
   </div>
@@ -506,7 +506,7 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
     <button class="secondary" onclick="testNotif()">Send Test Notification</button>
   </div>
   <div class="card"><h2>App Update</h2>
-<p class="muted">Current version: <b>v34.1</b>. If the Home Screen app ever shows an older layout, close it fully and reopen. This build uses a new service-worker cache so iPhone should fetch the latest files.</p>
+<p class="muted">Current version: <b>v35</b>. If the Home Screen app ever shows an older layout, close it fully and reopen. This build uses a new service-worker cache so iPhone should fetch the latest files.</p>
 <button class="secondary" onclick="forceAppRefresh()">Refresh App Version</button>
 </div>
 <div class="card"><h2>Connected Features</h2><p class="muted">Real AI, food recognition, form analysis, live payments, cloud accounts, social features, push notifications and smartwatch syncing need secure production services. Apple Watch / Health requires native HealthKit integration; Garmin, Fitbit and similar platforms require their supported APIs and user authorization.</p></div>
@@ -912,6 +912,27 @@ function bestSetForExercise(hist,name){
  return best;
 }
 
+
+function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function normExerciseName(s){return String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()}
+function getAcceptedProgression(){
+ try{return JSON.parse(profileStorage.getItem('fitAcceptedProgressionPlan')||'null')}catch(e){return null}
+}
+window.acceptAIProgressionPlan=function(){
+ try{
+  var p=JSON.parse(profileStorage.getItem('fitPendingProgressionPlan')||'null');
+  if(!p||!Array.isArray(p.items)||!p.items.length){adaptiveStatus('No AI progression plan is waiting to be accepted.');return}
+  p.accepted_at=new Date().toISOString();
+  profileStorage.setItem('fitAcceptedProgressionPlan',JSON.stringify(p));
+  adaptiveStatus('✓ AI plan accepted. Targets will appear when you train these exercises next.');
+  alert('AI progression plan accepted. Your next-session targets are now active.');
+  renderWorkout();
+ }catch(e){adaptiveStatus('Could not accept AI plan: '+e.message)}
+};
+function progressionTargetFor(name){
+ var p=getAcceptedProgression(); if(!p||!Array.isArray(p.items))return null;
+ return p.items.find(x=>normExerciseName(x.exercise)===normExerciseName(name))||null;
+}
 function adaptiveStatus(t){var e=document.getElementById('adaptiveStatus');if(e)e.textContent=t}
 function latestWorkout(){var x=getWorkoutHistory();return x.length?x[x.length-1]:null}
 function buildAdaptiveQuestion(w){
@@ -927,13 +948,16 @@ window.runAdaptiveReview=async function(auto){
  try{
   var url=SUPABASE_URL.replace(/\/$/,'')+'/functions/v1/fittrack-ai-coach';
   var r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+s.access_token},
-   body:JSON.stringify({mode:'adaptive',client_context:{question:buildAdaptiveQuestion(w),latest_workout:w}})});
+   body:JSON.stringify({mode:'progression',client_context:{question:buildAdaptiveQuestion(w),latest_workout:w}})});
   var d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Adaptive AI request failed');
   var text=d.coaching||d.text||'No review returned.';
-  profileStorage.setItem('fitAdaptiveLastReview',JSON.stringify({workout_id:w.id,created_at:new Date().toISOString(),coaching:text}));
-  adaptiveStatus('✓ Latest workout analysed. Your next-session targets are ready.');
-  var out=document.getElementById('realAIOutput');if(out)out.textContent=text;
-  if(post&&auto){post.style.display='block';post.textContent=text}
+  var plan=Array.isArray(d.progression_plan)?d.progression_plan:[];
+  profileStorage.setItem('fitAdaptiveLastReview',JSON.stringify({workout_id:w.id,created_at:new Date().toISOString(),coaching:text,progression_plan:plan}));
+  profileStorage.setItem('fitPendingProgressionPlan',JSON.stringify({routine:w.routine,source_workout_id:w.id,created_at:new Date().toISOString(),items:plan}));
+  adaptiveStatus('✓ Latest workout analysed. Review the plan, then accept it to activate next-session targets.');
+  var out=document.getElementById('realAIOutput');
+  if(out){out.innerHTML='<div style="white-space:pre-wrap">'+escapeHtml(text)+'</div>'+(plan.length?'<button style="margin-top:12px" onclick="acceptAIProgressionPlan()">✓ Accept AI Plan</button>':'');}
+  if(post&&auto){post.style.display='block';post.innerHTML='<div style="white-space:pre-wrap">'+escapeHtml(text)+'</div>'+(plan.length?'<button style="margin-top:12px" onclick="acceptAIProgressionPlan()">✓ Accept AI Plan</button>':'');}
  }catch(e){
   adaptiveStatus('Adaptive AI: '+e.message);
   if(post&&auto){post.style.display='block';post.textContent='AI review could not load: '+e.message}
@@ -1124,7 +1148,7 @@ window.forceAppRefresh=function(){
    }).then(function(){
      if('caches' in window){
        return caches.keys().then(function(keys){
-         return Promise.all(keys.filter(function(k){return k.indexOf('fittrack-pro-v34-1')<0}).map(function(k){return caches.delete(k)}));
+         return Promise.all(keys.filter(function(k){return k.indexOf('fittrack-pro-v35')<0}).map(function(k){return caches.delete(k)}));
        });
      }
    }).then(function(){location.reload(true)}).catch(function(){location.reload(true)});
