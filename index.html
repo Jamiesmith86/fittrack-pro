@@ -236,7 +236,7 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
 <div class="card native-ready"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><div><div class="small">HOUSEHOLD MODE</div><h2 id="householdTitle" style="margin:3px 0">Jamie + Wife</h2><p class="muted" style="margin-bottom:0">Tap the profile at the top to switch users. Your fitness data stays separate.</p></div><button class="secondary" onclick="openProfileSwitcher()">Switch</button></div></div>
   <div class="card" style="padding:10px 12px">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
-      <div><b>FitTrack Pro v38</b><div class="small">Future Workouts now has its own bottom tab.</div></div>
+      <div><b>FitTrack Pro v38.1</b><div class="small">Future Workouts now has its own bottom tab.</div></div>
       <span class="status-pill">UPDATED</span>
     </div>
   </div>
@@ -378,7 +378,7 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
   <div class="card"><h2>Recent Sessions</h2><div id="historyList" class="muted">Complete your first workout to start your history.</div></div>
 </section>
 <section id="progress" class="screen">
-  <div class="card hero"><span class="status-pill">V38 BODY TRANSFORMATION + CLOUD</span><h2 style="margin-top:8px">📈 Progress & Body Transformation</h2><p>Track body weight, measurements, photos and strength together — not the scale alone.</p></div>
+  <div class="card hero"><span class="status-pill">V38.1 BODY TRANSFORMATION + CLOUD</span><h2 style="margin-top:8px">📈 Progress & Body Transformation</h2><p>Track body weight, measurements, photos and strength together — not the scale alone.</p></div>
 
   <div class="card">
     <h2>Transformation Dashboard</h2>
@@ -1631,14 +1631,8 @@ window.suggestBusyGymSwap=function(){
 
 
 
-function fitCloudClient(){
- try{return (typeof supabase!=='undefined'&&supabase)?supabase:null}catch(e){return null}
-}
-async function fitCloudUser(){
- var c=fitCloudClient();if(!c)return null;
- try{var r=await c.auth.getUser();return r&&r.data&&r.data.user?r.data.user:null}catch(e){return null}
-}
-function cloudStatus(msg,bad){
+
+function transformationCloudStatus(msg,bad){
  var el=document.getElementById('transformationCloudStatus');if(!el)return;
  el.textContent=msg;el.className='auth-msg '+(bad?'error':'ok');
 }
@@ -1651,53 +1645,77 @@ function photoCloudPath(uid,p){
  var safeView=String(p.view||'progress').toLowerCase().replace(/[^a-z0-9]+/g,'-');
  return uid+'/'+String(p.date||isoToday())+'_'+String(p.id||Date.now())+'_'+safeView+'.jpg';
 }
-async function uploadProgressPhotosToCloud(c,user){
+async function storageUploadPrivate(path,blob){
+ var s=await getAuthenticatedSession();if(!s)throw new Error('Please sign in to FitTrack Cloud first.');
+ var r=await fetch(SUPABASE_URL+'/storage/v1/object/progress-photos/'+path,{
+   method:'POST',
+   headers:{
+     'apikey':SUPABASE_PUBLISHABLE_KEY,
+     'Authorization':'Bearer '+s.access_token,
+     'Content-Type':'image/jpeg',
+     'x-upsert':'true'
+   },
+   body:blob
+ });
+ var txt=await r.text();if(!r.ok){var d={};try{d=JSON.parse(txt)}catch(e){};throw new Error(d.message||d.error||('Photo upload failed ('+r.status+')'))}
+}
+async function storageDownloadPrivate(path){
+ var s=await getAuthenticatedSession();if(!s)throw new Error('Please sign in to FitTrack Cloud first.');
+ var r=await fetch(SUPABASE_URL+'/storage/v1/object/authenticated/progress-photos/'+path,{
+   method:'GET',
+   headers:{'apikey':SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+s.access_token}
+ });
+ if(!r.ok)throw new Error('Photo download failed ('+r.status+')');
+ return await r.blob();
+}
+async function uploadProgressPhotosToCloud(user){
  var photos=getProgressPhotos(),meta=[];
  for(var i=0;i<photos.length;i++){
    var p=photos[i],path=p.cloud_path||photoCloudPath(user.id,p);
-   if(p.data){
-     var up=await c.storage.from('progress-photos').upload(path,dataUrlToBlob(p.data),{contentType:'image/jpeg',upsert:true});
-     if(up.error)throw new Error('Photo upload failed: '+up.error.message);
-   }
+   if(p.data)await storageUploadPrivate(path,dataUrlToBlob(p.data));
    p.cloud_path=path;
    meta.push({id:p.id,date:p.date,view:p.view,cloud_path:path});
  }
  setProgressPhotos(photos);
  return meta;
 }
-async function downloadProgressPhotosFromCloud(c,meta){
+async function downloadProgressPhotosFromCloud(meta){
  var local=[];
  for(var i=0;i<(meta||[]).length;i++){
    var p=meta[i];if(!p.cloud_path)continue;
-   var dl=await c.storage.from('progress-photos').download(p.cloud_path);
-   if(dl.error)continue;
-   var data=await new Promise(function(resolve){var r=new FileReader();r.onload=()=>resolve(r.result);r.readAsDataURL(dl.data)});
-   local.push({id:p.id,date:p.date,view:p.view,cloud_path:p.cloud_path,data:data});
+   try{
+     var blob=await storageDownloadPrivate(p.cloud_path);
+     var data=await new Promise(function(resolve){var r=new FileReader();r.onload=()=>resolve(r.result);r.readAsDataURL(blob)});
+     local.push({id:p.id,date:p.date,view:p.view,cloud_path:p.cloud_path,data:data});
+   }catch(e){}
  }
  if(local.length)setProgressPhotos(local);
 }
 window.syncTransformationCloud=async function(){
- var c=fitCloudClient(),user=await fitCloudUser();if(!c||!user){cloudStatus('Please sign in to FitTrack Cloud first.',true);return}
- cloudStatus('Syncing transformation data and photos…',false);
+ var s=await getAuthenticatedSession();if(!s||!s.user){transformationCloudStatus('Please sign in to FitTrack Cloud first.',true);return}
+ transformationCloudStatus('Syncing transformation data and photos…',false);
  try{
-   var photoMeta=await uploadProgressPhotosToCloud(c,user);
-   var payload={user_id:user.id,body_progress:getBodyProgress(),photo_metadata:photoMeta,updated_at:new Date().toISOString()};
-   var q=await c.from('fittrack_body_progress').upsert(payload,{onConflict:'user_id'});
-   if(q.error)throw new Error(q.error.message);
-   cloudStatus('✓ Transformation cloud sync complete.',false);
- }catch(e){cloudStatus('Cloud sync failed: '+e.message,true)}
+   var photoMeta=await uploadProgressPhotosToCloud(s.user);
+   var payload={user_id:s.user.id,body_progress:getBodyProgress(),photo_metadata:photoMeta,updated_at:new Date().toISOString()};
+   await sbRequest('/rest/v1/fittrack_body_progress?on_conflict=user_id',{
+     method:'POST',
+     headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},
+     body:JSON.stringify(payload)
+   });
+   transformationCloudStatus('✓ Transformation cloud sync complete.',false);
+ }catch(e){transformationCloudStatus('Cloud sync failed: '+e.message,true)}
 };
 window.restoreTransformationCloud=async function(){
- var c=fitCloudClient(),user=await fitCloudUser();if(!c||!user){cloudStatus('Please sign in to FitTrack Cloud first.',true);return}
- cloudStatus('Restoring transformation data…',false);
+ var s=await getAuthenticatedSession();if(!s||!s.user){transformationCloudStatus('Please sign in to FitTrack Cloud first.',true);return}
+ transformationCloudStatus('Restoring transformation data…',false);
  try{
-   var q=await c.from('fittrack_body_progress').select('body_progress,photo_metadata,updated_at').eq('user_id',user.id).maybeSingle();
-   if(q.error)throw new Error(q.error.message);
-   if(!q.data){cloudStatus('No transformation backup found for this account.',true);return}
-   if(Array.isArray(q.data.body_progress))setBodyProgress(q.data.body_progress);
-   await downloadProgressPhotosFromCloud(c,q.data.photo_metadata||[]);
-   renderBodyProgress();cloudStatus('✓ Transformation data restored from cloud.',false);
- }catch(e){cloudStatus('Restore failed: '+e.message,true)}
+   var rows=await sbRequest('/rest/v1/fittrack_body_progress?user_id=eq.'+encodeURIComponent(s.user.id)+'&select=body_progress,photo_metadata,updated_at',{method:'GET'});
+   var row=Array.isArray(rows)?rows[0]:null;
+   if(!row){transformationCloudStatus('No transformation backup found for this account.',true);return}
+   if(Array.isArray(row.body_progress))setBodyProgress(row.body_progress);
+   await downloadProgressPhotosFromCloud(row.photo_metadata||[]);
+   renderBodyProgress();transformationCloudStatus('✓ Transformation data restored from cloud.',false);
+ }catch(e){transformationCloudStatus('Restore failed: '+e.message,true)}
 };
 
 function getBodyProgress(){try{return JSON.parse(profileStorage.getItem('fitBodyProgress')||'[]')}catch(e){return []}}
