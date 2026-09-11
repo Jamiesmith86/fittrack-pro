@@ -174,6 +174,13 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
 </style><style>
 .adaptive-card{border:1px solid rgba(34,211,238,.28)!important;background:linear-gradient(135deg,rgba(34,211,238,.07),rgba(139,92,246,.08))!important}
 .adaptive-output{white-space:pre-wrap;line-height:1.55;padding:12px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.035)}
+</style><style>
+.live-coach{margin-top:8px;padding:9px 11px;border-radius:12px;border:1px solid rgba(34,211,238,.25);font-size:13px}
+.live-coach.good{background:rgba(34,197,94,.09)}
+.live-coach.hold{background:rgba(245,158,11,.09)}
+.live-coach.adjust{background:rgba(239,68,68,.08)}
+.progress-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px}
+.progress-stat{padding:12px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.035)}
 </style></head>
 <body>
 <header><h1>FITTRACK <span style="color:#67e8f9">PRO</span></h1><p>Train smarter. Eat better. Progress faster.</p><div class="profile-chip" onclick="openProfileSwitcher()"><div class="profile-avatar" id="activeProfileAvatar">J</div><div><div class="small">PROFILE</div><div class="profile-name" id="activeProfileName">Jamie</div></div></div></header>
@@ -213,7 +220,7 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
 <div class="card native-ready"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><div><div class="small">HOUSEHOLD MODE</div><h2 id="householdTitle" style="margin:3px 0">Jamie + Wife</h2><p class="muted" style="margin-bottom:0">Tap the profile at the top to switch users. Your fitness data stays separate.</p></div><button class="secondary" onclick="openProfileSwitcher()">Switch</button></div></div>
   <div class="card" style="padding:10px 12px">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
-      <div><b>FitTrack Pro v35.1</b><div class="small">Future Workouts now has its own bottom tab.</div></div>
+      <div><b>FitTrack Pro v36</b><div class="small">Future Workouts now has its own bottom tab.</div></div>
       <span class="status-pill">UPDATED</span>
     </div>
   </div>
@@ -316,7 +323,13 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
    </div>
    <div id="realAIStatus" class="auth-msg">Ready.</div>
  </div>
- <div class="card adaptive-card">
+ <div class="card">
+ <h2>📈 Progression Dashboard</h2>
+ <p class="muted">See whether your accepted AI targets are being achieved and which lifts need attention.</p>
+ <div id="progressionDashboard"></div>
+ <button onclick="renderProgressionDashboard()">Refresh Progress</button>
+</div>
+<div class="card adaptive-card">
  <h2>🎯 Adaptive Training</h2>
  <p class="muted">FitTrack reviews completed sets, reps, RIR and recent history to recommend what to progress next time.</p>
  <div id="adaptiveStatus" class="small">Complete a workout to generate your next-session progression.</div><div id="progressionPlanPanel" style="display:none;margin-top:14px"></div>
@@ -506,7 +519,7 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
     <button class="secondary" onclick="testNotif()">Send Test Notification</button>
   </div>
   <div class="card"><h2>App Update</h2>
-<p class="muted">Current version: <b>v35.1</b>. If the Home Screen app ever shows an older layout, close it fully and reopen. This build uses a new service-worker cache so iPhone should fetch the latest files.</p>
+<p class="muted">Current version: <b>v36</b>. If the Home Screen app ever shows an older layout, close it fully and reopen. This build uses a new service-worker cache so iPhone should fetch the latest files.</p>
 <button class="secondary" onclick="forceAppRefresh()">Refresh App Version</button>
 </div>
 <div class="card"><h2>Connected Features</h2><p class="muted">Real AI, food recognition, form analysis, live payments, cloud accounts, social features, push notifications and smartwatch syncing need secure production services. Apple Watch / Health requires native HealthKit integration; Garmin, Fitbit and similar platforms require their supported APIs and user authorization.</p></div>
@@ -809,6 +822,7 @@ window.chooseLibraryExercise=function(i){
  var x=window._visibleExerciseOptions[i];if(!x)return;
  if(editingExerciseIndex>=0)exercises[editingExerciseIndex]=x.slice();else exercises.push(x.slice());
  saveRoutineEdits();profileStorage.removeItem('fitWorkoutDraft');closeExerciseEditor();renderWorkout();
+ if(document.getElementById('progressionDashboard'))renderProgressionDashboard();
 };
 window.saveCustomExercise=function(){
  var n=(document.getElementById('customExerciseName').value||'').trim(),s=Math.max(1,+document.getElementById('customExerciseSets').value||3),r=(document.getElementById('customExerciseReps').value||'8–12').trim();
@@ -939,6 +953,52 @@ window.acceptAIProgressionPlan=function(){
   alert('AI progression plan accepted. Your next-session targets are now active.');
   renderWorkout();
  }catch(e){adaptiveStatus('Could not accept AI plan: '+e.message)}
+};
+
+function liveSetCoach(exerciseName,weight,reps,rir){
+ var t=progressionTargetFor(exerciseName);
+ weight=Number(weight); reps=Number(reps); rir=Number(rir);
+ if(!t||!Number.isFinite(weight)||!Number.isFinite(reps)||reps<=0)return null;
+ var tw=Number(t.target_weight), tr=Number(t.target_reps);
+ if(!Number.isFinite(tw)||!Number.isFinite(tr))return null;
+ if(weight>=tw && reps>=tr && (!Number.isFinite(rir)||rir>=1)){
+   return {kind:'good',text:'✓ Target achieved. Keep technique clean. If the next set also feels controlled, you are on track for progression.'};
+ }
+ if(weight>=tw && reps<tr-2){
+   return {kind:'adjust',text:'Target missed by '+(tr-reps)+'+ reps. Hold this load or reduce slightly for the next set rather than forcing progression.'};
+ }
+ if(weight>=tw && reps<tr){
+   return {kind:'hold',text:'Close to target. Keep the same load next set and aim for '+tr+' clean reps.'};
+ }
+ if(weight<tw && reps>=tr){
+   return {kind:'hold',text:'Reps are on target, but load is below the AI target. Increase only if technique and RIR are still controlled.'};
+ }
+ return {kind:'hold',text:'Stay controlled and work toward '+tw+' kg × '+tr+' reps.'};
+}
+window.updateLiveCoach=function(exerciseName,weight,reps,rir,elementId){
+ var x=liveSetCoach(exerciseName,weight,reps,rir),el=document.getElementById(elementId);
+ if(!el)return;if(!x){el.style.display='none';return}
+ el.className='live-coach '+x.kind;el.textContent='🤖 Live Coach: '+x.text;el.style.display='block';
+};
+window.renderProgressionDashboard=function(){
+ var box=document.getElementById('progressionDashboard');if(!box)return;
+ var p=getAcceptedProgression(), hist=getWorkoutHistory();
+ var items=p&&Array.isArray(p.items)?p.items:[];
+ var achieved=0,close=0,attention=0;
+ var rows=items.map(function(t){
+   var best=null;
+   for(var wi=hist.length-1;wi>=0&&!best;wi--){
+     var exs=hist[wi].exercise_data||hist[wi].exercises||[];
+     var ex=exs.find(e=>normExerciseName(e.name||e.exercise)===normExerciseName(t.exercise));
+     if(ex)best=ex;
+   }
+   var sets=best?(best.sets||best.completed_sets||[]):[];
+   var hit=sets.some(s=>Number(s.weight)>=Number(t.target_weight)&&Number(s.reps)>=Number(t.target_reps));
+   var near=!hit&&sets.some(s=>Number(s.weight)>=Number(t.target_weight)&&Number(s.reps)>=Number(t.target_reps)-2);
+   if(hit)achieved++;else if(near)close++;else attention++;
+   return '<div class="card" style="padding:10px;margin:7px 0"><b>'+escapeHtml(t.exercise)+'</b><div class="small">🎯 '+escapeHtml(t.target_weight)+' kg × '+escapeHtml(t.target_reps)+' · '+(hit?'✅ Achieved':near?'🟠 Close':'🔵 Active target')+'</div></div>';
+ });
+ box.innerHTML='<div class="progress-grid"><div class="progress-stat"><b>'+achieved+'</b><div class="small">Targets achieved</div></div><div class="progress-stat"><b>'+close+'</b><div class="small">Close to target</div></div><div class="progress-stat"><b>'+attention+'</b><div class="small">Active targets</div></div><div class="progress-stat"><b>'+items.length+'</b><div class="small">Tracked lifts</div></div></div>'+(rows.join('')||'<div class="small muted" style="margin:12px 0">Accept an AI progression plan to start tracking targets.</div>');
 };
 function progressionTargetFor(name){
  var p=getAcceptedProgression(); if(!p||!Array.isArray(p.items))return null;
@@ -1160,7 +1220,7 @@ window.forceAppRefresh=function(){
    }).then(function(){
      if('caches' in window){
        return caches.keys().then(function(keys){
-         return Promise.all(keys.filter(function(k){return k.indexOf('fittrack-pro-v35-1')<0}).map(function(k){return caches.delete(k)}));
+         return Promise.all(keys.filter(function(k){return k.indexOf('fittrack-pro-v36')<0}).map(function(k){return caches.delete(k)}));
        });
      }
    }).then(function(){location.reload(true)}).catch(function(){location.reload(true)});
@@ -1642,6 +1702,22 @@ function boot(){
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();
+
+document.addEventListener('input',function(ev){
+ var input=ev.target;
+ if(!input||!input.closest)return;
+ var row=input.closest('[data-set-row],.set-row,.setLine,.set-line');
+ if(!row)return;
+ var card=row.closest('[data-exercise-name],.exercise-card,.exercise');
+ if(!card)return;
+ var name=(card.dataset&&card.dataset.exerciseName)||card.querySelector('h3,h4,b')?.textContent||'';
+ var inputs=row.querySelectorAll('input');
+ if(inputs.length<2)return;
+ var weight=inputs[0].value,reps=inputs[1].value,rir=inputs.length>2?inputs[2].value:'';
+ var id=row.dataset.liveCoachId;
+ if(!id){id='liveCoach_'+Math.random().toString(36).slice(2);row.dataset.liveCoachId=id;var d=document.createElement('div');d.id=id;d.style.display='none';row.appendChild(d);}
+ updateLiveCoach(name,weight,reps,rir,id);
+});
 </script>
 
 <script>
