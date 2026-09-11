@@ -1,1 +1,0 @@
-const CACHE='fittrack-pro-v27';self.addEventListener('fetch',e=>e.respondWith(fetch(e.request).catch(()=>caches.match(e.request))));
