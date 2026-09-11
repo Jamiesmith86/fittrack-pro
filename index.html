@@ -197,6 +197,17 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
 .trend-up{font-weight:800}.trend-down{font-weight:800}
 @media(max-width:560px){.v37-grid,.measure-row{grid-template-columns:1fr}.photo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
+
+<style>
+.plan-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.plan-card{padding:14px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.035)}
+.plan-card.featured{border-color:rgba(34,211,238,.55);box-shadow:0 0 0 1px rgba(34,211,238,.12) inset}
+.plan-price{font-size:28px;font-weight:900;margin:8px 0}
+.plan-feature{padding:5px 0;font-size:13px}
+.membership-badge{display:inline-flex;padding:6px 10px;border-radius:999px;border:1px solid var(--line);font-size:11px;font-weight:900}
+.locked-feature{opacity:.68}
+@media(max-width:700px){.plan-grid{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
 <header><h1>FITTRACK <span style="color:#67e8f9">PRO</span></h1><p>Train smarter. Eat better. Progress faster.</p><div class="profile-chip" onclick="openProfileSwitcher()"><div class="profile-avatar" id="activeProfileAvatar">J</div><div><div class="small">PROFILE</div><div class="profile-name" id="activeProfileName">Jamie</div></div></div></header>
@@ -236,7 +247,7 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
 <div class="card native-ready"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><div><div class="small">HOUSEHOLD MODE</div><h2 id="householdTitle" style="margin:3px 0">Jamie + Wife</h2><p class="muted" style="margin-bottom:0">Tap the profile at the top to switch users. Your fitness data stays separate.</p></div><button class="secondary" onclick="openProfileSwitcher()">Switch</button></div></div>
   <div class="card" style="padding:10px 12px">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
-      <div><b>FitTrack Pro v38.1</b><div class="small">Future Workouts now has its own bottom tab.</div></div>
+      <div><b>FitTrack Pro v39</b><div class="small">Future Workouts now has its own bottom tab.</div></div>
       <span class="status-pill">UPDATED</span>
     </div>
   </div>
@@ -378,7 +389,7 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
   <div class="card"><h2>Recent Sessions</h2><div id="historyList" class="muted">Complete your first workout to start your history.</div></div>
 </section>
 <section id="progress" class="screen">
-  <div class="card hero"><span class="status-pill">V38.1 BODY TRANSFORMATION + CLOUD</span><h2 style="margin-top:8px">📈 Progress & Body Transformation</h2><p>Track body weight, measurements, photos and strength together — not the scale alone.</p></div>
+  <div class="card hero"><span class="status-pill">V39 BODY TRANSFORMATION + CLOUD</span><h2 style="margin-top:8px">📈 Progress & Body Transformation</h2><p>Track body weight, measurements, photos and strength together — not the scale alone.</p></div>
 
   <div class="card">
     <h2>Transformation Dashboard</h2>
@@ -608,7 +619,8 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
 </div>
 <div class="card native-ready"><div class="small">APP STORE ROADMAP</div><h2>Native App Foundation</h2><p class="muted">v28 includes Capacitor configuration for future iOS/TestFlight and Android builds.</p></div>
   <div class="card"><h2>All Features</h2>
-    <button class="secondary" onclick="showScreen('coach')">🤖 AI Personal Trainer</button>
+    <button onclick="showScreen('membership')">💎 Membership & Pro</button>
+     <button class="secondary" onclick="showScreen('coach')">🤖 AI Personal Trainer</button>
     <button class="secondary" onclick="showScreen('progress')">📈 Progress, PRs & Goal ETA</button>
     <button class="secondary" onclick="showScreen('future');setFutureWeek(0)">📅 Future Workouts</button>
     <button class="secondary" onclick="showScreen('foodtools')">📷 Food, Barcode & Restaurant Tools</button>
@@ -627,6 +639,44 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
 <button class="secondary" onclick="forceAppRefresh()">Refresh App Version</button>
 </div>
 <div class="card"><h2>Connected Features</h2><p class="muted">Real AI, food recognition, form analysis, live payments, cloud accounts, social features, push notifications and smartwatch syncing need secure production services. Apple Watch / Health requires native HealthKit integration; Garmin, Fitbit and similar platforms require their supported APIs and user authorization.</p></div>
+</section>
+
+
+<section id="membership" class="screen">
+ <div class="card hero ai-pro-card"><span class="pro-pill">FITTRACK MEMBERSHIP</span><h2 style="margin-top:8px">🚀 Choose Your FitTrack Plan</h2><p>Test the complete upgrade experience before real billing is switched on.</p></div>
+ <div class="card">
+   <div class="small">CURRENT TEST MEMBERSHIP</div>
+   <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px">
+     <span id="membershipBadge" class="membership-badge">FREE</span>
+     <button class="secondary" onclick="resetMembershipDemo()">Reset Demo</button>
+   </div>
+   <div id="membershipMsg" class="note">No payment is taken in v39.</div>
+ </div>
+ <div class="plan-grid">
+   <div class="plan-card">
+    <h2>Free</h2><div class="plan-price">$0</div><div class="small">Get started</div>
+    <div class="plan-feature">✓ Workout logging</div><div class="plan-feature">✓ Basic progress tracking</div><div class="plan-feature">✓ Workout history</div><div class="plan-feature">✓ Basic meal tools</div>
+    <button class="secondary" onclick="selectDemoPlan('free')">Use Free</button>
+   </div>
+   <div class="plan-card featured">
+    <span class="pro-pill">MOST POPULAR</span><h2>Pro</h2><div class="plan-price">$14.99<span class="small"> / month*</span></div><div class="small">For serious personal progress</div>
+    <div class="plan-feature">✓ Real AI Coach</div><div class="plan-feature">✓ AI progressive overload</div><div class="plan-feature">✓ Live set coaching</div><div class="plan-feature">✓ Transformation AI reviews</div><div class="plan-feature">✓ Cloud body progress & private photos</div><div class="plan-feature">✓ Advanced strength trends</div>
+    <button onclick="selectDemoPlan('pro')">Start Pro Demo</button>
+   </div>
+   <div class="plan-card">
+    <h2>Coach / Gym</h2><div class="plan-price">Coming soon</div><div class="small">For trainers and fitness businesses</div>
+    <div class="plan-feature">✓ Client dashboard</div><div class="plan-feature">✓ Program management</div><div class="plan-feature">✓ Client progress oversight</div><div class="plan-feature">✓ Business branding</div>
+    <button class="secondary" onclick="selectDemoPlan('coach')">Preview Coach</button>
+   </div>
+ </div>
+ <div class="card">
+   <h2>🔒 Pro Feature Preview</h2>
+   <p class="muted">v39 simulates membership access only. It does not collect card details or charge customers.</p>
+   <div id="membershipFeatureStatus"></div>
+   <button onclick="showScreen('realAI')">Open AI Coach</button>
+   <button class="secondary" onclick="showScreen('progress')">Open Transformation Progress</button>
+ </div>
+ <div class="card"><p class="small">*Pricing shown in v39 is a test price for product design and can be changed before launch. Real App Store/Google Play/web billing is not enabled yet.</p></div>
 </section>
 
 </main>
@@ -769,6 +819,7 @@ window.showScreen=function(id){
  window.scrollTo(0,0);
  if(id==='videos')renderVideoManager();
  if(id==='progress')renderBodyProgress();
+ if(id==='membership')renderMembership();
 };
 window.newMotivation=function(){document.getElementById('motivation').textContent=messages[Math.floor(Math.random()*messages.length)]};
 
@@ -1825,6 +1876,24 @@ window.runTransformationAIReview=async function(){
    status.textContent='✓ Weekly transformation review ready.';status.className='auth-msg ok';
  }catch(e){status.textContent='AI review failed: '+e.message;status.className='auth-msg error'}
 };
+
+
+function getDemoMembership(){return profileStorage.getItem('fitMembershipDemo')||'free'}
+function membershipLabel(p){return p==='pro'?'PRO':p==='coach'?'COACH / GYM':'FREE'}
+function renderMembership(){
+ var p=getDemoMembership(),b=document.getElementById('membershipBadge'),m=document.getElementById('membershipMsg'),s=document.getElementById('membershipFeatureStatus');
+ if(b)b.textContent=membershipLabel(p);
+ if(m)m.textContent=p==='pro'?'✓ Pro demo active. No payment has been taken.':p==='coach'?'Coach/Gym preview selected. Commercial business tools are not billed or activated yet.':'Free demo selected. Upgrade to Pro Demo to preview premium access.';
+ if(s)s.innerHTML='<div class="v37-grid"><div class="v37-stat"><span class="small">AI Coach</span><b>'+(p==='pro'?'Unlocked':'Pro')+'</b></div><div class="v37-stat"><span class="small">AI Progression</span><b>'+(p==='pro'?'Unlocked':'Pro')+'</b></div><div class="v37-stat"><span class="small">Cloud Transformation</span><b>'+(p==='pro'?'Unlocked':'Pro')+'</b></div><div class="v37-stat"><span class="small">Coach Tools</span><b>'+(p==='coach'?'Preview':'Future')+'</b></div></div>';
+}
+window.selectDemoPlan=function(p){
+ profileStorage.setItem('fitMembershipDemo',p);
+ renderMembership();
+ var m=document.getElementById('membershipMsg');
+ if(m&&p==='pro')m.textContent='✓ Pro demo activated. This is a test membership only — no charge was made.';
+};
+window.resetMembershipDemo=function(){profileStorage.removeItem('fitMembershipDemo');renderMembership()};
+function isProDemo(){return getDemoMembership()==='pro'}
 
 function recentWeekHistory(){
  var hist=getWorkoutHistory(),cut=Date.now()-7*86400000;return hist.filter(x=>new Date(x.completed_at).getTime()>=cut);
