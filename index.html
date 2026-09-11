@@ -171,6 +171,9 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
 .ai-context{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
 .ai-context div{padding:10px;border:1px solid var(--line);border-radius:13px;background:rgba(255,255,255,.035)}
 @media(max-width:560px){.ai-context{grid-template-columns:1fr 1fr}.ai-tabs{grid-template-columns:1fr}}
+</style><style>
+.adaptive-card{border:1px solid rgba(34,211,238,.28)!important;background:linear-gradient(135deg,rgba(34,211,238,.07),rgba(139,92,246,.08))!important}
+.adaptive-output{white-space:pre-wrap;line-height:1.55;padding:12px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.035)}
 </style></head>
 <body>
 <header><h1>FITTRACK <span style="color:#67e8f9">PRO</span></h1><p>Train smarter. Eat better. Progress faster.</p><div class="profile-chip" onclick="openProfileSwitcher()"><div class="profile-avatar" id="activeProfileAvatar">J</div><div><div class="small">PROFILE</div><div class="profile-name" id="activeProfileName">Jamie</div></div></div></header>
@@ -210,7 +213,7 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
 <div class="card native-ready"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><div><div class="small">HOUSEHOLD MODE</div><h2 id="householdTitle" style="margin:3px 0">Jamie + Wife</h2><p class="muted" style="margin-bottom:0">Tap the profile at the top to switch users. Your fitness data stays separate.</p></div><button class="secondary" onclick="openProfileSwitcher()">Switch</button></div></div>
   <div class="card" style="padding:10px 12px">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
-      <div><b>FitTrack Pro v33.1</b><div class="small">Future Workouts now has its own bottom tab.</div></div>
+      <div><b>FitTrack Pro v34</b><div class="small">Future Workouts now has its own bottom tab.</div></div>
       <span class="status-pill">UPDATED</span>
     </div>
   </div>
@@ -313,7 +316,13 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
    </div>
    <div id="realAIStatus" class="auth-msg">Ready.</div>
  </div>
- <div class="card">
+ <div class="card adaptive-card">
+ <h2>🎯 Adaptive Training</h2>
+ <p class="muted">FitTrack reviews completed sets, reps, RIR and recent history to recommend what to progress next time.</p>
+ <div id="adaptiveStatus" class="small">Complete a workout to generate your next-session progression.</div>
+ <button onclick="runAdaptiveReview()">Analyse My Latest Workout</button>
+</div>
+<div class="card">
   <h2>Coach Response</h2>
   <div id="realAIOutput" class="ai-output muted">Your personalised AI coaching will appear here.</div>
   <button id="applyAIWorkoutBtn" class="secondary" style="display:none" onclick="applyAIWorkout()">Use This Workout</button>
@@ -497,7 +506,7 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
     <button class="secondary" onclick="testNotif()">Send Test Notification</button>
   </div>
   <div class="card"><h2>App Update</h2>
-<p class="muted">Current version: <b>v33.1</b>. If the Home Screen app ever shows an older layout, close it fully and reopen. This build uses a new service-worker cache so iPhone should fetch the latest files.</p>
+<p class="muted">Current version: <b>v34</b>. If the Home Screen app ever shows an older layout, close it fully and reopen. This build uses a new service-worker cache so iPhone should fetch the latest files.</p>
 <button class="secondary" onclick="forceAppRefresh()">Refresh App Version</button>
 </div>
 <div class="card"><h2>Connected Features</h2><p class="muted">Real AI, food recognition, form analysis, live payments, cloud accounts, social features, push notifications and smartwatch syncing need secure production services. Apple Watch / Health requires native HealthKit integration; Garmin, Fitbit and similar platforms require their supported APIs and user authorization.</p></div>
@@ -902,6 +911,34 @@ function bestSetForExercise(hist,name){
  hist.forEach(function(w){(w.exercises||[]).forEach(function(e){if(normalizeEx(e.name)!==normalizeEx(name))return;(e.sets||[]).forEach(function(s){var wt=+s.weight||0,r=+s.reps||0,one=wt*(1+r/30);if(one>best.est1rm)best={weight:wt,reps:r,est1rm:one}})})});
  return best;
 }
+
+function adaptiveStatus(t){var e=document.getElementById('adaptiveStatus');if(e)e.textContent=t}
+function latestWorkout(){var x=getWorkoutHistory();return x.length?x[x.length-1]:null}
+function buildAdaptiveQuestion(w){
+ return 'Review my latest completed workout and prescribe conservative next-session progression for each exercise. '+
+ 'Use my logged sets, reps and RIR. Identify PRs, stalls, technique/recovery concerns, and give specific next weight/reps targets. '+
+ 'If load should not increase, say what rep target to achieve first. Latest workout: '+JSON.stringify(w);
+}
+window.runAdaptiveReview=async function(auto){
+ var w=latestWorkout();if(!w){adaptiveStatus('Complete a workout first.');return}
+ var s=await getAuthenticatedSession();if(!s){adaptiveStatus('Log in to FitTrack Cloud to use Adaptive AI.');return}
+ adaptiveStatus('AI is analysing '+w.routine+'…');
+ var post=document.getElementById('adaptivePostReview');if(post&&auto){post.style.display='block';post.textContent='AI Coach is analysing this workout…'}
+ try{
+  var url=SUPABASE_URL.replace(/\/$/,'')+'/functions/v1/fittrack-ai-coach';
+  var r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+s.access_token},
+   body:JSON.stringify({mode:'weekly',client_context:{question:buildAdaptiveQuestion(w),latest_workout:w}})});
+  var d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Adaptive AI request failed');
+  var text=d.coaching||d.text||'No review returned.';
+  profileStorage.setItem('fitAdaptiveLastReview',JSON.stringify({workout_id:w.id,created_at:new Date().toISOString(),coaching:text}));
+  adaptiveStatus('✓ Latest workout analysed. Your next-session targets are ready.');
+  var out=document.getElementById('realAIOutput');if(out)out.textContent=text;
+  if(post&&auto){post.style.display='block';post.textContent=text}
+ }catch(e){
+  adaptiveStatus('Adaptive AI: '+e.message);
+  if(post&&auto){post.style.display='block';post.textContent='AI review could not load: '+e.message}
+ }
+};
 window.completeCurrentWorkout=function(){
  if(!exercises.length){alert('This is a rest day.');return}
  var hist=getWorkoutHistory(),prior=hist.slice(),session={id:'w'+Date.now(),completed_at:new Date().toISOString(),routine:routineKey(),exercises:[],total_sets:0,volume:0,pr_count:0};
@@ -926,6 +963,7 @@ window.completeCurrentWorkout=function(){
  document.getElementById('winOverlay').classList.add('open');updateExcitementUI();
  if(typeof cloudSave==='function'&&getFitSession&&getFitSession())cloudSave(true);
  renderWorkout();
+ setTimeout(function(){runAdaptiveReview(true)},400);
 };
 window.closeWin=function(){document.getElementById('winOverlay').classList.remove('open');showScreen('home');updateExcitementUI()};
 window.renderWorkoutHistory=function(){
@@ -1086,7 +1124,7 @@ window.forceAppRefresh=function(){
    }).then(function(){
      if('caches' in window){
        return caches.keys().then(function(keys){
-         return Promise.all(keys.filter(function(k){return k.indexOf('fittrack-pro-v33-1')<0}).map(function(k){return caches.delete(k)}));
+         return Promise.all(keys.filter(function(k){return k.indexOf('fittrack-pro-v34')<0}).map(function(k){return caches.delete(k)}));
        });
      }
    }).then(function(){location.reload(true)}).catch(function(){location.reload(true)});
