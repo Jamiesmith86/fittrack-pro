@@ -247,7 +247,7 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
 <div class="card native-ready"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><div><div class="small">HOUSEHOLD MODE</div><h2 id="householdTitle" style="margin:3px 0">Jamie + Wife</h2><p class="muted" style="margin-bottom:0">Tap the profile at the top to switch users. Your fitness data stays separate.</p></div><button class="secondary" onclick="openProfileSwitcher()">Switch</button></div></div>
   <div class="card" style="padding:10px 12px">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
-      <div><b>FitTrack Pro v39</b><div class="small">Future Workouts now has its own bottom tab.</div></div>
+      <div><b>FitTrack Pro v40</b><div class="small">Future Workouts now has its own bottom tab.</div></div>
       <span class="status-pill">UPDATED</span>
     </div>
   </div>
@@ -643,40 +643,40 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
 
 
 <section id="membership" class="screen">
- <div class="card hero ai-pro-card"><span class="pro-pill">FITTRACK MEMBERSHIP</span><h2 style="margin-top:8px">🚀 Choose Your FitTrack Plan</h2><p>Test the complete upgrade experience before real billing is switched on.</p></div>
+ <div class="card hero ai-pro-card"><span class="pro-pill">V40 SECURE MEMBERSHIP</span><h2 style="margin-top:8px">🚀 Choose Your FitTrack Plan</h2><p>Membership access is now stored against the signed-in FitTrack account rather than only in this browser.</p></div>
  <div class="card">
-   <div class="small">CURRENT TEST MEMBERSHIP</div>
+   <div class="small">CURRENT CLOUD MEMBERSHIP</div>
    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px">
      <span id="membershipBadge" class="membership-badge">FREE</span>
-     <button class="secondary" onclick="resetMembershipDemo()">Reset Demo</button>
+     <button class="secondary" onclick="refreshCloudMembership()">Refresh Membership</button>
    </div>
-   <div id="membershipMsg" class="note">No payment is taken in v39.</div>
+   <div id="membershipMsg" class="note">v40 reads your membership from your signed-in FitTrack account. No payment is taken yet.</div>
  </div>
  <div class="plan-grid">
    <div class="plan-card">
     <h2>Free</h2><div class="plan-price">$0</div><div class="small">Get started</div>
     <div class="plan-feature">✓ Workout logging</div><div class="plan-feature">✓ Basic progress tracking</div><div class="plan-feature">✓ Workout history</div><div class="plan-feature">✓ Basic meal tools</div>
-    <button class="secondary" onclick="selectDemoPlan('free')">Use Free</button>
+    <button class="secondary" onclick="requestMembershipTest('free')">Use Free</button>
    </div>
    <div class="plan-card featured">
     <span class="pro-pill">MOST POPULAR</span><h2>Pro</h2><div class="plan-price">$14.99<span class="small"> / month*</span></div><div class="small">For serious personal progress</div>
     <div class="plan-feature">✓ Real AI Coach</div><div class="plan-feature">✓ AI progressive overload</div><div class="plan-feature">✓ Live set coaching</div><div class="plan-feature">✓ Transformation AI reviews</div><div class="plan-feature">✓ Cloud body progress & private photos</div><div class="plan-feature">✓ Advanced strength trends</div>
-    <button onclick="selectDemoPlan('pro')">Start Pro Demo</button>
+    <button onclick="requestMembershipTest('pro')">Activate Pro Test</button>
    </div>
    <div class="plan-card">
     <h2>Coach / Gym</h2><div class="plan-price">Coming soon</div><div class="small">For trainers and fitness businesses</div>
     <div class="plan-feature">✓ Client dashboard</div><div class="plan-feature">✓ Program management</div><div class="plan-feature">✓ Client progress oversight</div><div class="plan-feature">✓ Business branding</div>
-    <button class="secondary" onclick="selectDemoPlan('coach')">Preview Coach</button>
+    <button class="secondary" onclick="requestMembershipTest('coach')">Preview Coach Tier</button>
    </div>
  </div>
  <div class="card">
    <h2>🔒 Pro Feature Preview</h2>
-   <p class="muted">v39 simulates membership access only. It does not collect card details or charge customers.</p>
+   <p class="muted">v40 uses a server-side membership record for access decisions. Test activations still do not collect card details or charge customers.</p>
    <div id="membershipFeatureStatus"></div>
    <button onclick="showScreen('realAI')">Open AI Coach</button>
    <button class="secondary" onclick="showScreen('progress')">Open Transformation Progress</button>
  </div>
- <div class="card"><p class="small">*Pricing shown in v39 is a test price for product design and can be changed before launch. Real App Store/Google Play/web billing is not enabled yet.</p></div>
+ <div class="card"><p class="small">*Pricing remains a test price. Real App Store/Google Play/web billing is not enabled yet.</p></div>
 </section>
 
 </main>
@@ -819,7 +819,7 @@ window.showScreen=function(id){
  window.scrollTo(0,0);
  if(id==='videos')renderVideoManager();
  if(id==='progress')renderBodyProgress();
- if(id==='membership')renderMembership();
+ if(id==='membership')loadCloudMembership();
 };
 window.newMotivation=function(){document.getElementById('motivation').textContent=messages[Math.floor(Math.random()*messages.length)]};
 
@@ -1878,22 +1878,63 @@ window.runTransformationAIReview=async function(){
 };
 
 
-function getDemoMembership(){return profileStorage.getItem('fitMembershipDemo')||'free'}
+
+var fitMembershipCache={plan:'free',status:'active',trial_ends_at:null,current_period_end:null,source:'default'};
+
 function membershipLabel(p){return p==='pro'?'PRO':p==='coach'?'COACH / GYM':'FREE'}
-function renderMembership(){
- var p=getDemoMembership(),b=document.getElementById('membershipBadge'),m=document.getElementById('membershipMsg'),s=document.getElementById('membershipFeatureStatus');
- if(b)b.textContent=membershipLabel(p);
- if(m)m.textContent=p==='pro'?'✓ Pro demo active. No payment has been taken.':p==='coach'?'Coach/Gym preview selected. Commercial business tools are not billed or activated yet.':'Free demo selected. Upgrade to Pro Demo to preview premium access.';
- if(s)s.innerHTML='<div class="v37-grid"><div class="v37-stat"><span class="small">AI Coach</span><b>'+(p==='pro'?'Unlocked':'Pro')+'</b></div><div class="v37-stat"><span class="small">AI Progression</span><b>'+(p==='pro'?'Unlocked':'Pro')+'</b></div><div class="v37-stat"><span class="small">Cloud Transformation</span><b>'+(p==='pro'?'Unlocked':'Pro')+'</b></div><div class="v37-stat"><span class="small">Coach Tools</span><b>'+(p==='coach'?'Preview':'Future')+'</b></div></div>';
+function membershipIsActive(m){
+ if(!m)return false;
+ if(m.status==='active')return true;
+ if(m.status==='trialing'&&m.trial_ends_at)return new Date(m.trial_ends_at)>new Date();
+ return false;
 }
-window.selectDemoPlan=function(p){
- profileStorage.setItem('fitMembershipDemo',p);
- renderMembership();
- var m=document.getElementById('membershipMsg');
- if(m&&p==='pro')m.textContent='✓ Pro demo activated. This is a test membership only — no charge was made.';
+function hasProEntitlement(){
+ var m=fitMembershipCache;
+ return membershipIsActive(m)&&(m.plan==='pro'||m.plan==='coach');
+}
+function renderMembership(){
+ var m=fitMembershipCache||{plan:'free',status:'active'},p=m.plan||'free';
+ var b=document.getElementById('membershipBadge'),msg=document.getElementById('membershipMsg'),s=document.getElementById('membershipFeatureStatus');
+ if(b)b.textContent=membershipLabel(p)+' · '+String(m.status||'active').toUpperCase();
+ if(msg){
+   var extra=m.trial_ends_at?' Trial ends '+new Date(m.trial_ends_at).toLocaleDateString()+'.':'';
+   msg.textContent=(p==='free'?'Free membership active.':p==='pro'?'✓ Pro entitlement is active on this FitTrack account.':'Coach/Gym tier selected for testing.')+extra+' No payment has been taken.';
+ }
+ if(s)s.innerHTML='<div class="v37-grid"><div class="v37-stat"><span class="small">AI Coach</span><b>'+(hasProEntitlement()?'Unlocked':'Pro')+'</b></div><div class="v37-stat"><span class="small">AI Progression</span><b>'+(hasProEntitlement()?'Unlocked':'Pro')+'</b></div><div class="v37-stat"><span class="small">Cloud Transformation</span><b>'+(hasProEntitlement()?'Unlocked':'Pro')+'</b></div><div class="v37-stat"><span class="small">Membership Source</span><b>'+String(m.source||'cloud')+'</b></div></div>';
+}
+async function loadCloudMembership(){
+ var s=await getAuthenticatedSession();
+ if(!s||!s.user){fitMembershipCache={plan:'free',status:'active',source:'signed-out'};renderMembership();return fitMembershipCache}
+ try{
+   var rows=await sbRequest('/rest/v1/fittrack_memberships?user_id=eq.'+encodeURIComponent(s.user.id)+'&select=plan,status,trial_ends_at,current_period_end,source,updated_at',{method:'GET'});
+   if(Array.isArray(rows)&&rows[0])fitMembershipCache=rows[0];
+   else{
+     var payload={user_id:s.user.id,plan:'free',status:'active',source:'signup',updated_at:new Date().toISOString()};
+     await sbRequest('/rest/v1/fittrack_memberships?on_conflict=user_id',{method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(payload)});
+     fitMembershipCache=payload;
+   }
+ }catch(e){fitMembershipCache={plan:'free',status:'active',source:'fallback'};}
+ renderMembership();return fitMembershipCache;
+}
+window.refreshCloudMembership=async function(){
+ var msg=document.getElementById('membershipMsg');if(msg)msg.textContent='Refreshing membership…';
+ await loadCloudMembership();
 };
-window.resetMembershipDemo=function(){profileStorage.removeItem('fitMembershipDemo');renderMembership()};
-function isProDemo(){return getDemoMembership()==='pro'}
+window.requestMembershipTest=async function(plan){
+ var s=await getAuthenticatedSession();
+ var msg=document.getElementById('membershipMsg');
+ if(!s||!s.user){if(msg)msg.textContent='Please sign in to FitTrack Cloud first.';return}
+ if(plan==='coach'){if(msg)msg.textContent='Coach/Gym remains a preview tier in v40.';return}
+ try{
+   var now=new Date(),trial=null,status='active';
+   if(plan==='pro'){trial=new Date(now.getTime()+14*86400000).toISOString();status='trialing'}
+   var payload={user_id:s.user.id,plan:plan,status:status,trial_ends_at:trial,current_period_end:null,source:'v40_test',updated_at:now.toISOString()};
+   await sbRequest('/rest/v1/fittrack_memberships?on_conflict=user_id',{method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(payload)});
+   await loadCloudMembership();
+   if(msg)msg.textContent=plan==='pro'?'✓ 14-day Pro test entitlement activated in your cloud account. No charge was made.':'Free cloud membership activated.';
+ }catch(e){if(msg)msg.textContent='Membership update failed: '+e.message}
+};
+function isProDemo(){return hasProEntitlement()}
 
 function recentWeekHistory(){
  var hist=getWorkoutHistory(),cut=Date.now()-7*86400000;return hist.filter(x=>new Date(x.completed_at).getTime()>=cut);
