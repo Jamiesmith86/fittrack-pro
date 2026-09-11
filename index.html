@@ -181,7 +181,23 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
 .live-coach.adjust{background:rgba(239,68,68,.08)}
 .progress-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px}
 .progress-stat{padding:12px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.035)}
-</style></head>
+</style>
+<style>
+.v37-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.v37-stat{padding:12px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.035)}
+.v37-stat b{font-size:22px;display:block}
+.v37-chart{width:100%;min-height:180px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.025);padding:8px;overflow:hidden}
+.v37-chart svg{width:100%;height:180px;display:block}
+.measure-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.photo-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}
+.photo-grid img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:12px;border:1px solid var(--line)}
+.photo-item{position:relative}
+.photo-item .small{margin-top:4px}
+.v37-entry{padding:10px;border:1px solid var(--line);border-radius:12px;margin:7px 0;background:rgba(255,255,255,.025)}
+.trend-up{font-weight:800}.trend-down{font-weight:800}
+@media(max-width:560px){.v37-grid,.measure-row{grid-template-columns:1fr}.photo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+</head>
 <body>
 <header><h1>FITTRACK <span style="color:#67e8f9">PRO</span></h1><p>Train smarter. Eat better. Progress faster.</p><div class="profile-chip" onclick="openProfileSwitcher()"><div class="profile-avatar" id="activeProfileAvatar">J</div><div><div class="small">PROFILE</div><div class="profile-name" id="activeProfileName">Jamie</div></div></div></header>
 
@@ -220,7 +236,7 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
 <div class="card native-ready"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><div><div class="small">HOUSEHOLD MODE</div><h2 id="householdTitle" style="margin:3px 0">Jamie + Wife</h2><p class="muted" style="margin-bottom:0">Tap the profile at the top to switch users. Your fitness data stays separate.</p></div><button class="secondary" onclick="openProfileSwitcher()">Switch</button></div></div>
   <div class="card" style="padding:10px 12px">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
-      <div><b>FitTrack Pro v36</b><div class="small">Future Workouts now has its own bottom tab.</div></div>
+      <div><b>FitTrack Pro v37</b><div class="small">Future Workouts now has its own bottom tab.</div></div>
       <span class="status-pill">UPDATED</span>
     </div>
   </div>
@@ -362,10 +378,87 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
   <div class="card"><h2>Recent Sessions</h2><div id="historyList" class="muted">Complete your first workout to start your history.</div></div>
 </section>
 <section id="progress" class="screen">
-  <div class="card"><h2>Transformation Dashboard</h2><div class="score-ring"><span id="progressScore">82</span></div><p class="muted" style="text-align:center">FitTrack Score</p></div>
-  <div class="card"><h2>Strength & PRs</h2><label>Exercise</label><input id="prExercise" value="Barbell Bench Press"><div class="row2"><div><label>Weight kg</label><input id="prWeight" type="number" value="90"></div><div><label>Reps</label><input id="prReps" type="number" value="8"></div></div><button onclick="savePR()">Check PR</button><div id="prResult" class="note">Log a set to detect a PR.</div></div>
-  <div class="card"><h2>Goal ETA</h2><div class="row2"><div><label>Current kg</label><input id="etaCurrent" type="number" value="85"></div><div><label>Goal kg</label><input id="etaGoal" type="number" value="80"></div></div><button class="secondary" onclick="calcETA()">Calculate Projection</button><div id="etaResult" class="note">Projection updates from your weekly trend.</div></div>
-  <div class="card"><h2>Transformation Timeline</h2><div class="timeline"><div><b>Week 1</b><br><span class="muted">Starting photos, weight and lifts</span></div><div><b>Week 4</b><br><span class="muted">First comparison</span></div><div><b>Week 8</b><br><span class="muted">Midpoint review</span></div><div><b>Week 12</b><br><span class="muted">Transformation review</span></div></div></div>
+  <div class="card hero"><span class="status-pill">V37 BODY TRANSFORMATION</span><h2 style="margin-top:8px">📈 Progress & Body Transformation</h2><p>Track body weight, measurements, photos and strength together — not the scale alone.</p></div>
+
+  <div class="card">
+    <h2>Transformation Dashboard</h2>
+    <div class="v37-grid">
+      <div class="v37-stat"><span class="small">Current Weight</span><b id="v37CurrentWeight">—</b><span class="small">kg</span></div>
+      <div class="v37-stat"><span class="small">Goal Progress</span><b id="v37GoalProgress">—</b><span class="small">toward target</span></div>
+      <div class="v37-stat"><span class="small">30-Day Change</span><b id="v37ThirtyChange">—</b><span class="small">kg</span></div>
+      <div class="v37-stat"><span class="small">Workouts (30d)</span><b id="v37Workouts30">0</b><span class="small">completed</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>⚖️ Log Body Progress</h2>
+    <div class="row2">
+      <div><label>Date</label><input id="bodyDate" type="date"></div>
+      <div><label>Weight (kg)</label><input id="bodyWeight" type="number" step="0.1" placeholder="85.0"></div>
+    </div>
+    <div class="measure-row">
+      <div><label>Waist (cm)</label><input id="bodyWaist" type="number" step="0.1" placeholder="Optional"></div>
+      <div><label>Chest (cm)</label><input id="bodyChest" type="number" step="0.1" placeholder="Optional"></div>
+      <div><label>Arms (cm)</label><input id="bodyArms" type="number" step="0.1" placeholder="Optional"></div>
+      <div><label>Thigh (cm)</label><input id="bodyThigh" type="number" step="0.1" placeholder="Optional"></div>
+    </div>
+    <label>Progress note<input id="bodyNote" placeholder="Energy, clothes fit, training, etc."></label>
+    <button onclick="saveBodyProgress()">Save Progress Entry</button>
+    <div id="bodySaveMsg" class="small"></div>
+  </div>
+
+  <div class="card">
+    <h2>Weight Trend</h2>
+    <div id="weightTrendChart" class="v37-chart"><div class="muted">Log at least two weight entries to see your trend.</div></div>
+    <div id="weightTrendText" class="note">Your trend will appear here.</div>
+  </div>
+
+  <div class="card">
+    <h2>📏 Measurement Change</h2>
+    <div id="measurementSummary" class="muted">Add body measurements to compare changes over time.</div>
+  </div>
+
+  <div class="card">
+    <h2>💪 Strength Trend</h2>
+    <label>Exercise</label>
+    <select id="strengthTrendExercise" onchange="renderStrengthTrend()"></select>
+    <div id="strengthTrendChart" class="v37-chart"><div class="muted">Complete workouts to build your strength chart.</div></div>
+    <div id="strengthTrendText" class="note">Strength trend uses your best estimated 1RM from logged sets.</div>
+  </div>
+
+  <div class="card">
+    <h2>📷 Progress Photos</h2>
+    <p class="muted">Add a front, side or back photo. v37 stores compressed photos on this device/profile. Cloud photo storage will come later.</p>
+    <div class="row2">
+      <div><label>View</label><select id="photoView"><option>Front</option><option>Side</option><option>Back</option></select></div>
+      <div><label>Date</label><input id="photoDate" type="date"></div>
+    </div>
+    <input id="progressPhotoInput" type="file" accept="image/*">
+    <button class="secondary" onclick="saveProgressPhoto()">Save Progress Photo</button>
+    <div id="photoMsg" class="small"></div>
+    <div id="progressPhotoGrid" class="photo-grid"></div>
+  </div>
+
+  <div class="card">
+    <h2>🎯 Goal ETA</h2>
+    <div class="row2"><div><label>Current kg</label><input id="etaCurrent" type="number" value="85"></div><div><label>Goal kg</label><input id="etaGoal" type="number" value="80"></div></div>
+    <button class="secondary" onclick="calcETA()">Calculate Projection</button>
+    <div id="etaResult" class="note">Projection updates from your weekly trend.</div>
+  </div>
+
+  <div class="card ai-pro-card">
+    <div class="pro-pill">AI PROGRESS REVIEW</div>
+    <h2>🧠 Weekly Transformation Review</h2>
+    <p class="muted">FitTrack combines body trend and training consistency so AI can judge progress more intelligently than scale weight alone.</p>
+    <button onclick="runTransformationAIReview()">Analyse My Progress</button>
+    <div id="transformationAIStatus" class="auth-msg">Ready.</div>
+    <div id="transformationAIOutput" class="ai-output muted">Your weekly body + training review will appear here.</div>
+  </div>
+
+  <div class="card">
+    <h2>Recent Body Entries</h2>
+    <div id="bodyEntryList" class="muted">No body progress entries yet.</div>
+  </div>
 </section>
 
 <section id="foodtools" class="screen">
@@ -664,6 +757,7 @@ window.showScreen=function(id){
  var n=document.getElementById('nav_'+id);if(n)n.classList.add('active');
  window.scrollTo(0,0);
  if(id==='videos')renderVideoManager();
+ if(id==='progress')renderBodyProgress();
 };
 window.newMotivation=function(){document.getElementById('motivation').textContent=messages[Math.floor(Math.random()*messages.length)]};
 
@@ -823,6 +917,7 @@ window.chooseLibraryExercise=function(i){
  if(editingExerciseIndex>=0)exercises[editingExerciseIndex]=x.slice();else exercises.push(x.slice());
  saveRoutineEdits();profileStorage.removeItem('fitWorkoutDraft');closeExerciseEditor();renderWorkout();
  if(document.getElementById('progressionDashboard'))renderProgressionDashboard();
+ if(document.getElementById('bodyDate')){document.getElementById('bodyDate').value=isoToday();document.getElementById('photoDate').value=isoToday();}
 };
 window.saveCustomExercise=function(){
  var n=(document.getElementById('customExerciseName').value||'').trim(),s=Math.max(1,+document.getElementById('customExerciseSets').value||3),r=(document.getElementById('customExerciseReps').value||'8–12').trim();
@@ -1220,7 +1315,7 @@ window.forceAppRefresh=function(){
    }).then(function(){
      if('caches' in window){
        return caches.keys().then(function(keys){
-         return Promise.all(keys.filter(function(k){return k.indexOf('fittrack-pro-v36')<0}).map(function(k){return caches.delete(k)}));
+         return Promise.all(keys.filter(function(k){return k.indexOf('fittrack-pro-v37')<0}).map(function(k){return caches.delete(k)}));
        });
      }
    }).then(function(){location.reload(true)}).catch(function(){location.reload(true)});
@@ -1521,6 +1616,115 @@ window.suggestBusyGymSwap=function(){
  if(confirm('Swap '+exercises[editingExerciseIndex][0]+' for '+pick[0]+'?')){
    exercises[editingExerciseIndex]=pick.slice();saveRoutineEdits();profileStorage.removeItem('fitWorkoutDraft');closeExerciseEditor();renderWorkout();
  }
+};
+
+
+function getBodyProgress(){try{return JSON.parse(profileStorage.getItem('fitBodyProgress')||'[]')}catch(e){return []}}
+function setBodyProgress(x){profileStorage.setItem('fitBodyProgress',JSON.stringify(x))}
+function isoToday(){return new Date().toISOString().slice(0,10)}
+function finiteOrNull(v){var n=Number(v);return Number.isFinite(n)&&String(v).trim()!==''?n:null}
+function svgLineChart(points,formatter){
+ if(!points||points.length<2)return '<div class="muted">Not enough data yet.</div>';
+ var vals=points.map(x=>x.value),min=Math.min.apply(null,vals),max=Math.max.apply(null,vals);
+ if(max===min){max+=1;min-=1}
+ var W=600,H=180,pad=28;
+ var coords=points.map(function(x,i){var px=pad+(i/(points.length-1))*(W-pad*2);var py=H-pad-((x.value-min)/(max-min))*(H-pad*2);return[px,py]});
+ var poly=coords.map(x=>x[0].toFixed(1)+','+x[1].toFixed(1)).join(' ');
+ var circles=coords.map((x,i)=>'<circle cx="'+x[0]+'" cy="'+x[1]+'" r="4"><title>'+esc(points[i].label)+' • '+esc(formatter(points[i].value))+'</title></circle>').join('');
+ return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="progress trend"><line x1="'+pad+'" y1="'+(H-pad)+'" x2="'+(W-pad)+'" y2="'+(H-pad)+'" stroke="currentColor" opacity=".18"/><polyline points="'+poly+'" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>'+circles+'<text x="'+pad+'" y="18" fill="currentColor" opacity=".7" font-size="12">'+esc(formatter(max))+'</text><text x="'+pad+'" y="'+(H-6)+'" fill="currentColor" opacity=".7" font-size="12">'+esc(formatter(min))+'</text></svg>';
+}
+window.saveBodyProgress=function(){
+ var date=document.getElementById('bodyDate').value||isoToday(),weight=finiteOrNull(document.getElementById('bodyWeight').value);
+ if(weight===null){document.getElementById('bodySaveMsg').textContent='Enter your weight first.';return}
+ var entry={id:'b'+Date.now(),date:date,weight:weight,waist:finiteOrNull(document.getElementById('bodyWaist').value),chest:finiteOrNull(document.getElementById('bodyChest').value),arms:finiteOrNull(document.getElementById('bodyArms').value),thigh:finiteOrNull(document.getElementById('bodyThigh').value),note:(document.getElementById('bodyNote').value||'').trim(),created_at:new Date().toISOString()};
+ var arr=getBodyProgress(),existing=arr.findIndex(x=>x.date===date);
+ if(existing>=0){entry.id=arr[existing].id;arr[existing]=entry}else arr.push(entry);
+ arr.sort((a,b)=>String(a.date).localeCompare(String(b.date)));setBodyProgress(arr);
+ document.getElementById('bodySaveMsg').textContent='✓ Progress saved.';
+ renderBodyProgress();
+};
+function measurementDelta(first,last,key){
+ if(first[key]==null||last[key]==null)return null;return +(last[key]-first[key]).toFixed(1)
+}
+function renderMeasurementSummary(arr){
+ var root=document.getElementById('measurementSummary');if(!root)return;
+ var withAny=arr.filter(x=>x.waist!=null||x.chest!=null||x.arms!=null||x.thigh!=null);
+ if(withAny.length<2){root.innerHTML='Add measurements on at least two dates to compare changes.';return}
+ var first=withAny[0],last=withAny[withAny.length-1],keys=[['waist','Waist'],['chest','Chest'],['arms','Arms'],['thigh','Thigh']];
+ root.innerHTML='<div class="v37-grid">'+keys.map(function(k){var d=measurementDelta(first,last,k[0]);return '<div class="v37-stat"><span class="small">'+k[1]+'</span><b>'+(d===null?'—':((d>0?'+':'')+d+' cm'))+'</b><span class="small">'+esc(first.date)+' → '+esc(last.date)+'</span></div>'}).join('')+'</div>';
+}
+function workoutExercises(w){return Array.isArray(w.exercises)?w.exercises:(Array.isArray(w.exercise_data)?w.exercise_data:[])}
+function populateStrengthExercises(){
+ var s=document.getElementById('strengthTrendExercise');if(!s)return;
+ var names={};getWorkoutHistory().forEach(w=>workoutExercises(w).forEach(e=>{var n=e.name||e.exercise;if(n)names[n]=1}));
+ var list=Object.keys(names).sort(),current=s.value;
+ s.innerHTML=list.length?list.map(n=>'<option>'+esc(n)+'</option>').join(''):'<option>No workout data yet</option>';
+ if(current&&list.includes(current))s.value=current;
+}
+window.renderStrengthTrend=function(){
+ var root=document.getElementById('strengthTrendChart'),txt=document.getElementById('strengthTrendText'),sel=document.getElementById('strengthTrendExercise');if(!root||!sel)return;
+ var name=sel.value,pts=[];
+ getWorkoutHistory().forEach(function(w){
+   var ex=workoutExercises(w).find(e=>normExerciseName(e.name||e.exercise)===normExerciseName(name));if(!ex)return;
+   var best=0;(ex.sets||ex.completed_sets||[]).forEach(function(s){var wt=Number(s.weight),r=Number(s.reps);if(wt>0&&r>0){var est=wt*(1+r/30);if(est>best)best=est}});
+   if(best)pts.push({label:String(w.completed_at||'').slice(0,10),value:+best.toFixed(1)});
+ });
+ root.innerHTML=svgLineChart(pts,v=>v.toFixed(1)+' kg e1RM');
+ if(txt){if(pts.length>=2){var d=+(pts[pts.length-1].value-pts[0].value).toFixed(1);txt.textContent='Estimated strength change: '+(d>=0?'+':'')+d+' kg from first to latest logged performance.'}else txt.textContent='Complete this exercise in at least two workouts to see a strength trend.'}
+};
+function getProgressPhotos(){try{return JSON.parse(profileStorage.getItem('fitProgressPhotos')||'[]')}catch(e){return []}}
+function setProgressPhotos(x){profileStorage.setItem('fitProgressPhotos',JSON.stringify(x))}
+function compressImage(file,cb){
+ var reader=new FileReader();reader.onload=function(){var img=new Image();img.onload=function(){var max=640,scale=Math.min(1,max/img.width),c=document.createElement('canvas');c.width=Math.max(1,Math.round(img.width*scale));c.height=Math.max(1,Math.round(img.height*scale));c.getContext('2d').drawImage(img,0,0,c.width,c.height);cb(c.toDataURL('image/jpeg',.68))};img.src=reader.result};reader.readAsDataURL(file)
+}
+window.saveProgressPhoto=function(){
+ var f=document.getElementById('progressPhotoInput').files[0],msg=document.getElementById('photoMsg');if(!f){msg.textContent='Choose a photo first.';return}
+ msg.textContent='Compressing photo…';
+ compressImage(f,function(data){
+   var arr=getProgressPhotos();arr.push({id:'p'+Date.now(),date:document.getElementById('photoDate').value||isoToday(),view:document.getElementById('photoView').value,data:data});
+   if(arr.length>18)arr=arr.slice(arr.length-18);
+   try{setProgressPhotos(arr);msg.textContent='✓ Photo saved on this device.';renderProgressPhotos()}catch(e){msg.textContent='Phone/browser storage is full. Delete older progress photos before adding more.'}
+ });
+};
+window.deleteProgressPhoto=function(id){if(!confirm('Delete this progress photo from this device?'))return;setProgressPhotos(getProgressPhotos().filter(x=>x.id!==id));renderProgressPhotos()};
+function renderProgressPhotos(){
+ var root=document.getElementById('progressPhotoGrid');if(!root)return;var arr=getProgressPhotos().slice().sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+ root.innerHTML=arr.length?arr.map(x=>'<div class="photo-item"><img src="'+x.data+'" alt="'+esc(x.view)+' progress photo"><div class="small"><b>'+esc(x.view)+'</b> • '+esc(x.date)+'</div><button class="secondary" style="padding:6px;margin-top:5px" onclick="deleteProgressPhoto(\''+esc(x.id)+'\')">Delete</button></div>').join(''):'<div class="muted">No progress photos saved yet.</div>';
+}
+window.renderBodyProgress=function(){
+ var arr=getBodyProgress(),now=Date.now(),hist=getWorkoutHistory(),recent30=hist.filter(w=>now-new Date(w.completed_at).getTime()<=30*86400000);
+ var current=arr.length?arr[arr.length-1]:null,first=arr.length?arr[0]:null;
+ var goal=Number((document.getElementById('etaGoal')||{}).value)||80;
+ var curEl=document.getElementById('v37CurrentWeight');if(curEl)curEl.textContent=current?current.weight.toFixed(1):'—';
+ var prog=document.getElementById('v37GoalProgress');
+ if(prog&&current&&first&&first.weight!==goal){var pct=Math.max(0,Math.min(100,Math.round(((first.weight-current.weight)/(first.weight-goal))*100)));prog.textContent=pct+'%'}else if(prog)prog.textContent='—';
+ var cutoff=now-30*86400000,base=null;for(var i=arr.length-1;i>=0;i--){if(new Date(arr[i].date).getTime()<=cutoff){base=arr[i];break}}if(!base&&arr.length>1)base=arr[0];
+ var ch=document.getElementById('v37ThirtyChange');if(ch)ch.textContent=(current&&base)?((current.weight-base.weight>=0?'+':'')+(current.weight-base.weight).toFixed(1)):'—';
+ var w30=document.getElementById('v37Workouts30');if(w30)w30.textContent=recent30.length;
+ var chart=document.getElementById('weightTrendChart');if(chart)chart.innerHTML=svgLineChart(arr.filter(x=>Number.isFinite(Number(x.weight))).map(x=>({label:x.date,value:Number(x.weight)})),v=>v.toFixed(1)+' kg');
+ var trend=document.getElementById('weightTrendText');if(trend){if(arr.length>=2){var diff=+(arr[arr.length-1].weight-arr[0].weight).toFixed(1);trend.textContent='Overall scale trend: '+(diff>=0?'+':'')+diff+' kg across '+arr.length+' logged entries. Use measurements, photos and strength alongside scale weight.'}else trend.textContent='Log at least two entries to calculate your trend.'}
+ renderMeasurementSummary(arr);
+ var list=document.getElementById('bodyEntryList');if(list)list.innerHTML=arr.length?arr.slice().reverse().slice(0,10).map(x=>'<div class="v37-entry"><b>'+esc(x.date)+' • '+x.weight.toFixed(1)+' kg</b><div class="small">'+[['Waist',x.waist],['Chest',x.chest],['Arms',x.arms],['Thigh',x.thigh]].filter(a=>a[1]!=null).map(a=>a[0]+': '+a[1]+' cm').join(' • ')+'</div>'+(x.note?'<div class="small">'+esc(x.note)+'</div>':'')+'</div>').join(''):'No body progress entries yet.';
+ populateStrengthExercises();renderStrengthTrend();renderProgressPhotos();
+ var bd=document.getElementById('bodyDate'),pd=document.getElementById('photoDate');if(bd&&!bd.value)bd.value=isoToday();if(pd&&!pd.value)pd.value=isoToday();
+};
+function transformationContextText(){
+ var arr=getBodyProgress(),hist=getWorkoutHistory(),now=Date.now(),recent=hist.filter(w=>now-new Date(w.completed_at).getTime()<=7*86400000);
+ var first=arr[0],last=arr[arr.length-1],body=last?('Latest weight '+last.weight+' kg on '+last.date+(first&&first!==last?'; first logged '+first.weight+' kg on '+first.date:'')+(last.waist!=null?'; latest waist '+last.waist+' cm':'')).trim():'No body measurements logged.';
+ var vol=recent.reduce((a,b)=>a+(Number(b.volume)||0),0),prs=recent.reduce((a,b)=>a+(Number(b.pr_count)||0),0);
+ return body+' Workouts in last 7 days: '+recent.length+'. Training volume: '+Math.round(vol)+' kg. PRs: '+prs+'. Please assess body-composition progress conservatively, consider scale trend together with measurements and training performance, and give 3 practical actions for the next week. Do not diagnose medical conditions.';
+}
+window.runTransformationAIReview=async function(){
+ var status=document.getElementById('transformationAIStatus'),out=document.getElementById('transformationAIOutput');
+ if(!getFitSession||!getFitSession()){status.textContent='Please log in to FitTrack Cloud first.';status.className='auth-msg error';if(typeof openAuth==='function')openAuth();return}
+ status.textContent='FitTrack AI is reviewing body and training progress…';status.className='auth-msg ok';out.textContent='Analysing your progress…';
+ var q=document.getElementById('realAIQuestion');if(q)q.value=transformationContextText();
+ try{
+   await runRealAI('weekly');
+   var aiOut=document.getElementById('realAIOutput');
+   out.textContent=aiOut&&aiOut.textContent?aiOut.textContent:'Review complete. Open AI Coach to view the response.';
+   status.textContent='✓ Weekly transformation review ready.';status.className='auth-msg ok';
+ }catch(e){status.textContent='AI review failed: '+e.message;status.className='auth-msg error'}
 };
 
 function recentWeekHistory(){
