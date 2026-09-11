@@ -161,6 +161,16 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
 .sync-log{max-height:180px;overflow:auto;font-size:12px}
 .sync-log div{padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06)}
 @media(max-width:520px){.cloud-grid{grid-template-columns:1fr 1fr}}
+</style>
+<style>
+.ai-pro-card{border:1px solid rgba(139,92,246,.34)!important;background:linear-gradient(135deg,rgba(139,92,246,.09),rgba(34,211,238,.06))!important}
+.ai-tabs{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 0}
+.ai-tabs button{margin:0}
+.ai-output{white-space:pre-wrap;line-height:1.55;padding:13px;border-radius:15px;border:1px solid rgba(139,92,246,.2);background:rgba(255,255,255,.03);min-height:100px}
+.pro-pill{display:inline-flex;padding:5px 8px;border-radius:999px;font-size:10px;font-weight:900;background:rgba(139,92,246,.13);border:1px solid rgba(139,92,246,.3)}
+.ai-context{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.ai-context div{padding:10px;border:1px solid var(--line);border-radius:13px;background:rgba(255,255,255,.035)}
+@media(max-width:560px){.ai-context{grid-template-columns:1fr 1fr}.ai-tabs{grid-template-columns:1fr}}
 </style></head>
 <body>
 <header><h1>FITTRACK <span style="color:#67e8f9">PRO</span></h1><p>Train smarter. Eat better. Progress faster.</p><div class="profile-chip" onclick="openProfileSwitcher()"><div class="profile-avatar" id="activeProfileAvatar">J</div><div><div class="small">PROFILE</div><div class="profile-name" id="activeProfileName">Jamie</div></div></div></header>
@@ -168,7 +178,11 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
 <main>
 
 <section id="home" class="screen active">
-<div class="card" style="border:1px solid rgba(34,211,238,.28);background:linear-gradient(135deg,rgba(34,211,238,.07),rgba(139,92,246,.08))">
+<div class="card ai-pro-card">
+ <div class="pro-pill">PRO AI</div><h2>🧠 FitTrack AI Coach</h2>
+ <p class="muted">Uses your real FitTrack profile, recent workouts, PRs and meal plan to personalise coaching.</p>
+ <button onclick="showScreen('realAI');refreshAIContext()">Open AI Coach</button>
+</div><div class="card" style="border:1px solid rgba(34,211,238,.28);background:linear-gradient(135deg,rgba(34,211,238,.07),rgba(139,92,246,.08))">
  <div class="small">YOUR DAY AT A GLANCE</div><h2>⚡ Today</h2>
  <div class="today-grid">
   <div class="today-stack">
@@ -196,7 +210,7 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
 <div class="card native-ready"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><div><div class="small">HOUSEHOLD MODE</div><h2 id="householdTitle" style="margin:3px 0">Jamie + Wife</h2><p class="muted" style="margin-bottom:0">Tap the profile at the top to switch users. Your fitness data stays separate.</p></div><button class="secondary" onclick="openProfileSwitcher()">Switch</button></div></div>
   <div class="card" style="padding:10px 12px">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
-      <div><b>FitTrack Pro v32</b><div class="small">Future Workouts now has its own bottom tab.</div></div>
+      <div><b>FitTrack Pro v33</b><div class="small">Future Workouts now has its own bottom tab.</div></div>
       <span class="status-pill">UPDATED</span>
     </div>
   </div>
@@ -280,6 +294,31 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
 
 
 
+
+<section id="realAI" class="screen">
+ <div class="card hero ai-pro-card"><span class="pro-pill">PRO AI</span><h2 style="margin-top:8px">🧠 FitTrack AI Coach</h2><p>Personal coaching based on the customer's actual FitTrack cloud data.</p></div>
+ <div class="card">
+   <div class="small">LIVE CONTEXT</div>
+   <div class="ai-context">
+    <div><span class="small">Recent Workouts</span><b id="aiCtxWorkouts">0</b></div>
+    <div><span class="small">PRs</span><b id="aiCtxPRs">0</b></div>
+    <div><span class="small">Meal Plan</span><b id="aiCtxMeals">No</b></div>
+   </div>
+   <label>What do you want help with?<textarea id="realAIQuestion" rows="3" placeholder="e.g. What should I aim for on bench today?"></textarea></label>
+   <div class="ai-tabs">
+    <button onclick="runRealAI('daily')">⚡ Daily Coach</button>
+    <button onclick="runRealAI('workout')">🏋️ Adjust My Workout</button>
+    <button onclick="runRealAI('weekly')">📈 Weekly Review</button>
+    <button onclick="runRealAI('nutrition')">🥗 Nutrition Coach</button>
+   </div>
+   <div id="realAIStatus" class="auth-msg">Ready.</div>
+ </div>
+ <div class="card">
+  <h2>Coach Response</h2>
+  <div id="realAIOutput" class="ai-output muted">Your personalised AI coaching will appear here.</div>
+  <button id="applyAIWorkoutBtn" class="secondary" style="display:none" onclick="applyAIWorkout()">Use This Workout</button>
+ </div>
+</section>
 <section id="weeklyReport" class="screen">
  <div class="card hero"><span class="status-pill">WEEKLY INSIGHTS</span><h2 style="margin-top:8px">🤖 AI Weekly Progress Report</h2><p>See what improved, what stalled and what to focus on next week.</p></div>
  <div class="card"><div id="weeklyReportOutput" class="muted">Complete a few workouts to generate your first report.</div></div>
@@ -410,6 +449,7 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
   </div>
 </section>
 <section id="more" class="screen">
+<div class="card ai-pro-card"><div class="pro-pill">V33</div><h2>🧠 Real AI Coach</h2><p class="muted">Secure server-side AI connection. Your provider key stays out of GitHub and the browser.</p><button onclick="showScreen('realAI');refreshAIContext()">Open AI Coach</button><div id="aiConnectionState" class="small">AI endpoint: Supabase Edge Function</div></div>
 <div class="card" style="border:1px solid rgba(34,211,238,.24)">
  <div class="small">V32 CLOUD DATA</div><h2>☁️ My FitTrack Cloud</h2>
  <p class="muted">Your profile, workouts, personal records, meal plans and preferences can now be saved as separate cloud records.</p>
@@ -457,7 +497,7 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
     <button class="secondary" onclick="testNotif()">Send Test Notification</button>
   </div>
   <div class="card"><h2>App Update</h2>
-<p class="muted">Current version: <b>v32</b>. If the Home Screen app ever shows an older layout, close it fully and reopen. This build uses a new service-worker cache so iPhone should fetch the latest files.</p>
+<p class="muted">Current version: <b>v33</b>. If the Home Screen app ever shows an older layout, close it fully and reopen. This build uses a new service-worker cache so iPhone should fetch the latest files.</p>
 <button class="secondary" onclick="forceAppRefresh()">Refresh App Version</button>
 </div>
 <div class="card"><h2>Connected Features</h2><p class="muted">Real AI, food recognition, form analysis, live payments, cloud accounts, social features, push notifications and smartwatch syncing need secure production services. Apple Watch / Health requires native HealthKit integration; Garmin, Fitbit and similar platforms require their supported APIs and user authorization.</p></div>
@@ -1046,7 +1086,7 @@ window.forceAppRefresh=function(){
    }).then(function(){
      if('caches' in window){
        return caches.keys().then(function(keys){
-         return Promise.all(keys.filter(function(k){return k.indexOf('fittrack-pro-v32')<0}).map(function(k){return caches.delete(k)}));
+         return Promise.all(keys.filter(function(k){return k.indexOf('fittrack-pro-v33')<0}).map(function(k){return caches.delete(k)}));
        });
      }
    }).then(function(){location.reload(true)}).catch(function(){location.reload(true)});
@@ -1468,8 +1508,59 @@ window.restoreStructuredCloud=async function(){
    structuredStats();updateExcitementUI();updateTodayDashboard();structuredMsg('✓ Cloud data restored to this device.',true);
  }catch(e){structuredMsg('Restore failed: '+e.message,false)}
 };
+
+var lastAIWorkout=null;
+function realAIStatus(t,ok){
+ var e=document.getElementById('realAIStatus');if(e){e.textContent=t;e.className='auth-msg '+(ok?'ok':'error')}
+}
+window.refreshAIContext=function(){
+ var hist=getWorkoutHistory(),prs=+profileStorage.getItem('fitPRTotal')||0,meal=profileStorage.getItem('fitHealthyMealPlan');
+ var a=document.getElementById('aiCtxWorkouts');if(a)a.textContent=Math.min(hist.length,20);
+ var b=document.getElementById('aiCtxPRs');if(b)b.textContent=prs;
+ var c=document.getElementById('aiCtxMeals');if(c)c.textContent=meal?'Yes':'No';
+};
+function buildAIClientContext(){
+ var hist=getWorkoutHistory().slice(-20),meal=null;
+ try{meal=JSON.parse(profileStorage.getItem('fitHealthyMealPlan')||'null')}catch(e){}
+ return {
+  profile:activeProfilePayload(),
+  recent_workouts:hist,
+  personal_records_total:+profileStorage.getItem('fitPRTotal')||0,
+  meal_plan:meal,
+  xp:+profileStorage.getItem('fitXP')||0,
+  question:(document.getElementById('realAIQuestion')||{}).value||''
+ };
+}
+window.runRealAI=async function(mode){
+ var s=await getAuthenticatedSession();
+ if(!s){realAIStatus('Please log in to FitTrack Cloud first.',false);openAuth();return}
+ realAIStatus('FitTrack AI is reviewing your training data…',true);
+ var out=document.getElementById('realAIOutput');out.textContent='Analysing your FitTrack history…';
+ document.getElementById('applyAIWorkoutBtn').style.display='none';lastAIWorkout=null;
+ try{
+   var url=SUPABASE_URL.replace(/\/$/,'')+'/functions/v1/fittrack-ai-coach';
+   var r=await fetch(url,{
+     method:'POST',
+     headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+s.access_token},
+     body:JSON.stringify({mode:mode,client_context:buildAIClientContext()})
+   });
+   var data=await r.json().catch(()=>({}));
+   if(!r.ok)throw new Error(data.error||data.message||('AI request failed ('+r.status+')'));
+   out.textContent=data.coaching||data.text||'No coaching response returned.';
+   if(data.workout&&Array.isArray(data.workout.exercises)){lastAIWorkout=data.workout;document.getElementById('applyAIWorkoutBtn').style.display='block'}
+   realAIStatus('✓ Personalised AI coaching ready.',true);
+ }catch(e){
+   out.textContent='AI connection is not live yet.';
+   realAIStatus('AI setup required: '+e.message,false);
+ }
+};
+window.applyAIWorkout=function(){
+ if(!lastAIWorkout||!Array.isArray(lastAIWorkout.exercises))return;
+ exercises=lastAIWorkout.exercises.map(function(e){return [e.name,+e.sets||3,e.reps||'8–12']});
+ saveRoutineEdits();profileStorage.removeItem('fitWorkoutDraft');renderWorkout();showScreen('workout');
+};
 function boot(){
- try{updateActiveProfileUI();initCloudAuth();updateExcitementUI();updateAIBuilderMode();updateTodayDashboard();structuredStats();loadTodayPlan();renderWeeklySchedule();renderWorkout();renderVideoManager();renderShop();drawTimer();calcRecovery();updateXP();updateDailyCoach();renderFutureDays();maybeShowFirstRun()}
+ try{updateActiveProfileUI();initCloudAuth();updateExcitementUI();updateAIBuilderMode();updateTodayDashboard();structuredStats();refreshAIContext();loadTodayPlan();renderWeeklySchedule();renderWorkout();renderVideoManager();renderShop();drawTimer();calcRecovery();updateXP();updateDailyCoach();renderFutureDays();maybeShowFirstRun()}
  catch(err){
    var b=document.createElement('div');b.style.cssText='position:fixed;left:10px;right:10px;top:90px;z-index:999;background:#7f1d1d;color:white;padding:12px;border-radius:12px';
    b.textContent='FitTrack startup error: '+err.message;document.body.appendChild(b);
