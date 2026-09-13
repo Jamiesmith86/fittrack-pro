@@ -208,6 +208,33 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
 .locked-feature{opacity:.68}
 @media(max-width:700px){.plan-grid{grid-template-columns:1fr}}
 </style>
+
+<style>
+/* v41 cleaner information hierarchy */
+.v41-hero{background:linear-gradient(135deg,rgba(34,211,238,.09),rgba(139,92,246,.07));border:1px solid rgba(34,211,238,.22)!important}
+.v41-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.v41-kpi{padding:13px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.035)}
+.v41-kpi b{display:block;font-size:21px;margin-top:3px}
+.v41-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.v41-actions button{margin:0}
+.v41-section-title{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.v41-section-title h2{margin:0}
+.v41-nutri-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.v41-target{padding:14px;border-radius:16px;border:1px solid var(--line);background:rgba(255,255,255,.035);text-align:center}
+.v41-target strong{display:block;font-size:23px;margin:3px 0}
+.v41-burn{font-size:32px;font-weight:900;line-height:1}
+.v41-goal-note{padding:10px 12px;border-radius:13px;border:1px solid rgba(34,211,238,.18);background:rgba(34,211,238,.055)}
+.v41-clean-card{padding:16px}
+details.v41-group{border:1px solid var(--line);border-radius:16px;padding:0 13px;background:rgba(255,255,255,.025);margin:9px 0}
+details.v41-group summary{cursor:pointer;font-weight:900;padding:14px 0;list-style:none}
+details.v41-group summary::-webkit-details-marker{display:none}
+details.v41-group .v41-group-body{padding:0 0 12px}
+details.v41-group button{margin-top:7px}
+@media(max-width:680px){
+ .v41-kpis,.v41-nutri-grid{grid-template-columns:1fr 1fr}
+ .v41-actions{grid-template-columns:1fr 1fr}
+}
+</style>
 </head>
 <body>
 <header><h1>FITTRACK <span style="color:#67e8f9">PRO</span></h1><p>Train smarter. Eat better. Progress faster.</p><div class="profile-chip" onclick="openProfileSwitcher()"><div class="profile-avatar" id="activeProfileAvatar">J</div><div><div class="small">PROFILE</div><div class="profile-name" id="activeProfileName">Jamie</div></div></div></header>
@@ -233,6 +260,16 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
  </div>
 </div>
 
+<div class="card v41-clean-card">
+  <div class="v41-section-title"><div><div class="small">TODAY'S NUTRITION</div><h2>Calories & Macros</h2></div><button class="secondary" style="width:auto" onclick="showScreen('nutrition');renderNutritionHub()">Open</button></div>
+  <div class="v41-kpis" style="margin-top:10px">
+    <div class="v41-kpi"><span class="small">Calories</span><b id="homeNutCalories">—</b></div>
+    <div class="v41-kpi"><span class="small">Protein</span><b id="homeNutProtein">—</b></div>
+    <div class="v41-kpi"><span class="small">Carbs</span><b id="homeNutCarbs">—</b></div>
+    <div class="v41-kpi"><span class="small">Goal</span><b id="homeNutGoal" style="font-size:14px">—</b></div>
+  </div>
+</div>
+
 <div class="card cloud-panel">
   <div class="sync-row">
     <div>
@@ -247,7 +284,7 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
 <div class="card native-ready"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><div><div class="small">HOUSEHOLD MODE</div><h2 id="householdTitle" style="margin:3px 0">Jamie + Wife</h2><p class="muted" style="margin-bottom:0">Tap the profile at the top to switch users. Your fitness data stays separate.</p></div><button class="secondary" onclick="openProfileSwitcher()">Switch</button></div></div>
   <div class="card" style="padding:10px 12px">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
-      <div><b>FitTrack Pro v40</b><div class="small">Future Workouts now has its own bottom tab.</div></div>
+      <div><b>FitTrack Pro v41</b><div class="small">Cleaner navigation • Smart nutrition • Calorie burn.</div></div>
       <span class="status-pill">UPDATED</span>
     </div>
   </div>
@@ -292,7 +329,13 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
 
 
 <section id="workout" class="screen">
-<div class="card"><h2>✨ AI Workout Generator</h2><button class="secondary" onclick="showScreen('aiBuilder')">Generate My Program</button></div>
+<div class="card v41-clean-card">
+ <div class="v41-section-title"><h2>🏋️ Training</h2><span class="fitness-badge">TODAY</span></div>
+ <div class="v41-actions" style="margin-top:10px">
+   <button onclick="showScreen('aiBuilder')">✨ Build Program</button>
+   <button class="secondary" onclick="showScreen('future');setFutureWeek(0)">📅 Future Workouts</button>
+ </div>
+</div>
   <div class="card hero">
     <span class="status-pill" id="dayTypeBadge">TRAINING DAY</span>
     <h2 id="workoutDayTitle" style="margin-top:8px">Today’s Workout</h2>
@@ -389,7 +432,7 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
   <div class="card"><h2>Recent Sessions</h2><div id="historyList" class="muted">Complete your first workout to start your history.</div></div>
 </section>
 <section id="progress" class="screen">
-  <div class="card hero"><span class="status-pill">V39 BODY TRANSFORMATION + CLOUD</span><h2 style="margin-top:8px">📈 Progress & Body Transformation</h2><p>Track body weight, measurements, photos and strength together — not the scale alone.</p></div>
+  <div class="card hero"><span class="status-pill">V41 BODY TRANSFORMATION + CLOUD</span><h2 style="margin-top:8px">📈 Progress & Body Transformation</h2><p>Track body weight, measurements, photos and strength together — not the scale alone.</p></div>
 
   <div class="card">
     <h2>Transformation Dashboard</h2>
@@ -483,11 +526,92 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
   </div>
 </section>
 
+
+<section id="nutrition" class="screen">
+  <div class="card hero v41-hero">
+    <span class="status-pill">SMART NUTRITION</span>
+    <h2 style="margin-top:8px">🥗 Calories, Macros & Meal Planning</h2>
+    <p>Set a goal and FitTrack calculates a practical daily calorie, protein and carbohydrate starting target, then builds meals around it.</p>
+  </div>
+
+  <div class="card v41-clean-card">
+    <div class="v41-section-title"><h2>🎯 My Daily Targets</h2><span id="nutritionGoalBadge" class="fitness-badge">Goal</span></div>
+    <div class="v41-nutri-grid" style="margin-top:12px">
+      <div class="v41-target"><span class="small">Calories</span><strong id="targetCalories">—</strong><span class="small">kcal/day</span></div>
+      <div class="v41-target"><span class="small">Protein</span><strong id="targetProtein">—</strong><span class="small">g/day</span></div>
+      <div class="v41-target"><span class="small">Carbs</span><strong id="targetCarbs">—</strong><span class="small">g/day</span></div>
+      <div class="v41-target"><span class="small">Fat</span><strong id="targetFat">—</strong><span class="small">g/day</span></div>
+    </div>
+    <div id="nutritionTargetNote" class="v41-goal-note small" style="margin-top:11px">Enter your details below to calculate your starting targets.</div>
+  </div>
+
+  <div class="card">
+    <h2>🧮 Calorie & Macro Calculator</h2>
+    <div class="row2">
+      <div><label>Goal</label><select id="nutGoal">
+        <option value="lose">Lose Fat</option>
+        <option value="recomp" selected>Build Muscle + Get Lean</option>
+        <option value="gain">Build Muscle</option>
+        <option value="maintain">Maintain Weight</option>
+      </select></div>
+      <div><label>Sex</label><select id="nutSex"><option value="male" selected>Male</option><option value="female">Female</option></select></div>
+    </div>
+    <div class="row2">
+      <div><label>Age</label><input id="nutAge" type="number" min="16" max="90" value="40"></div>
+      <div><label>Weight (kg)</label><input id="nutWeight" type="number" min="35" max="250" step="0.1" value="85"></div>
+    </div>
+    <div class="row2">
+      <div><label>Height (cm)</label><input id="nutHeight" type="number" min="130" max="230" value="180"></div>
+      <div><label>Daily activity</label><select id="nutActivity">
+        <option value="1.2">Mostly seated</option>
+        <option value="1.375" selected>Lightly active</option>
+        <option value="1.55">Moderately active</option>
+        <option value="1.725">Very active</option>
+      </select></div>
+    </div>
+    <button onclick="calculateNutritionTargets(true)">Calculate & Save My Targets</button>
+    <p class="small muted">These are estimated starting targets, not medical nutrition advice. Adjust from real weight, waist and performance trends over 2–3 weeks.</p>
+  </div>
+
+  <div class="card">
+    <div class="v41-section-title"><h2>🔥 Daily Calorie Burn Estimate</h2><span class="fitness-badge">ESTIMATE</span></div>
+    <div class="row2">
+      <div><label>Steps today</label><input id="burnSteps" type="number" min="0" step="500" value="9000"></div>
+      <div><label>Workout minutes</label><input id="burnMinutes" type="number" min="0" max="300" value="60"></div>
+    </div>
+    <label>Workout type / intensity<select id="burnType">
+      <option value="5">Weights — moderate</option>
+      <option value="6">Weights — hard</option>
+      <option value="3.5">Brisk walking</option>
+      <option value="7.5">Cycling — moderate/hard</option>
+      <option value="8">HIIT</option>
+      <option value="8.3">Running — moderate</option>
+    </select></label>
+    <button class="secondary" onclick="calculateCalorieBurn()">Estimate Today's Burn</button>
+    <div class="v41-kpis" style="margin-top:12px">
+      <div class="v41-kpi"><span class="small">Steps</span><b id="burnStepsOut">—</b><span class="small">kcal</span></div>
+      <div class="v41-kpi"><span class="small">Workout</span><b id="burnWorkoutOut">—</b><span class="small">kcal</span></div>
+      <div class="v41-kpi"><span class="small">Activity Burn</span><b id="burnActivityOut">—</b><span class="small">kcal</span></div>
+      <div class="v41-kpi"><span class="small">Est. Total Day</span><b id="burnTotalOut">—</b><span class="small">kcal</span></div>
+    </div>
+    <p class="small muted">Calorie burn from steps, exercise and wearables is always an estimate. Use it as a trend, not a reason to automatically “eat back” every calorie.</p>
+  </div>
+
+  <div class="card">
+    <h2>🍽️ Goal-Based Meal Plan</h2>
+    <p id="nutritionMealPrompt" class="muted">Your meal plan will use your saved goal and macro targets.</p>
+    <div class="v41-actions">
+      <button onclick="openGoalMealPlanner()">Generate My Meal Plan</button>
+      <button class="secondary" onclick="showScreen('realAI');refreshAIContext()">Ask Nutrition Coach</button>
+    </div>
+  </div>
+</section>
+
 <section id="foodtools" class="screen">
   <div class="card hero"><span class="status-pill">HEALTHY EATING</span><h2 style="margin-top:8px">🥗 Healthy Meal Creator</h2><p>Meals made for the user, including portions and exactly how to cook them.</p></div>
   <div class="card" id="mealBuilderCard">
     <div class="row2">
-      <div><label>Goal</label><select id="mealGoal"><option>Lose Fat</option><option>Build Muscle</option><option selected>Healthy Eating</option><option>Maintain Weight</option></select></div>
+      <div><label>Goal</label><select id="mealGoal"><option>Lose Fat</option><option selected>Build Muscle + Get Lean</option><option>Build Muscle</option><option>Maintain Weight</option></select></div>
       <div><label>Meals per day</label><select id="mealCount"><option>3</option><option selected>4</option><option>5</option></select></div>
     </div>
     <div class="row2">
@@ -498,6 +622,11 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
       <div><label>Daily calories</label><input id="mealCalories" type="number" value="2300"></div>
       <div><label>Protein target (g)</label><input id="mealProtein" type="number" value="180"></div>
     </div>
+    <div class="row2">
+      <div><label>Carb target (g)</label><input id="mealCarbs" type="number" value="240"></div>
+      <div><label>Fat target (g)</label><input id="mealFat" type="number" value="70"></div>
+    </div>
+    <button class="secondary" onclick="applyRecommendedTargetsToMeals()">Use My Recommended Targets</button>
     <label>Foods you like<input id="mealLikes" placeholder="chicken, steak, pasta, yoghurt..."></label>
     <label>Foods to avoid / allergies<input id="mealAvoid" placeholder="e.g. peanuts, shellfish"></label>
     <button onclick="generateHealthyMeals()">✨ Create Healthy Meal Plan</button>
@@ -618,24 +747,48 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
 <button class="secondary" onclick="resetDeviceUser()">Change Who Uses This Phone</button>
 </div>
 <div class="card native-ready"><div class="small">APP STORE ROADMAP</div><h2>Native App Foundation</h2><p class="muted">v28 includes Capacitor configuration for future iOS/TestFlight and Android builds.</p></div>
-  <div class="card"><h2>All Features</h2>
-    <button onclick="showScreen('membership')">💎 Membership & Pro</button>
-     <button class="secondary" onclick="showScreen('coach')">🤖 AI Personal Trainer</button>
-    <button class="secondary" onclick="showScreen('progress')">📈 Progress, PRs & Goal ETA</button>
-    <button class="secondary" onclick="showScreen('future');setFutureWeek(0)">📅 Future Workouts</button>
-    <button class="secondary" onclick="showScreen('foodtools')">📷 Food, Barcode & Restaurant Tools</button>
-    <button class="secondary" onclick="showScreen('recovery')">😴 Recovery & Auto Progression</button>
-    <button class="secondary" onclick="showScreen('challenges')">🏆 Challenges, Friends & XP</button>
-    <button class="secondary" onclick="showScreen('wearables')">⌚ Smart Watch Connections</button>
-    <button class="secondary" onclick="showScreen('formcoach')">📹 Form Coach & Voice Mode</button>
-    <button class="secondary" onclick="showScreen('videos')">🎬 Exercise Video Library</button>
-    <button class="secondary" onclick="showScreen('shop')">🛍️ Supplement Shop</button>
-    <button class="secondary" onclick="showScreen('business2')">🏢 Coach & Gym Business</button>
-    <button class="secondary" onclick="requestNotif()">🔔 Enable Motivation Notifications</button>
-    <button class="secondary" onclick="testNotif()">Send Test Notification</button>
+  <div class="card">
+    <h2>Tools & Settings</h2>
+    <details class="v41-group" open>
+      <summary>🏋️ Training & Coaching</summary>
+      <div class="v41-group-body">
+        <button onclick="showScreen('membership')">💎 Membership & Pro</button>
+        <button class="secondary" onclick="showScreen('realAI');refreshAIContext()">🧠 Real AI Coach</button>
+        <button class="secondary" onclick="showScreen('coach')">🤖 Quick AI Trainer</button>
+        <button class="secondary" onclick="showScreen('future');setFutureWeek(0)">📅 Future Workouts</button>
+        <button class="secondary" onclick="showScreen('recovery')">😴 Recovery & Progression</button>
+        <button class="secondary" onclick="showScreen('videos')">🎬 Exercise Videos</button>
+      </div>
+    </details>
+    <details class="v41-group">
+      <summary>🥗 Nutrition & Lifestyle</summary>
+      <div class="v41-group-body">
+        <button onclick="showScreen('nutrition');renderNutritionHub()">🥗 Nutrition Dashboard</button>
+        <button class="secondary" onclick="showScreen('foodtools');renderMealBuilder()">🍽️ Meal Creator & Food Tools</button>
+        <button class="secondary" onclick="showScreen('wearables')">⌚ Wearables</button>
+      </div>
+    </details>
+    <details class="v41-group">
+      <summary>🏆 Progress & Extras</summary>
+      <div class="v41-group-body">
+        <button onclick="showScreen('weeklyReport');renderWeeklyReport()">📈 Weekly Report</button>
+        <button class="secondary" onclick="showScreen('achievements');renderAchievements()">🏅 Achievements</button>
+        <button class="secondary" onclick="showScreen('challenges')">🏆 Challenges & Friends</button>
+        <button class="secondary" onclick="showScreen('formcoach')">📹 Form Coach</button>
+        <button class="secondary" onclick="showScreen('business2')">🏢 Coach & Gym Business</button>
+        <button class="secondary" onclick="showScreen('shop')">🛍️ Supplement Shop</button>
+      </div>
+    </details>
+    <details class="v41-group">
+      <summary>⚙️ App</summary>
+      <div class="v41-group-body">
+        <button class="secondary" onclick="requestNotif()">🔔 Enable Notifications</button>
+        <button class="secondary" onclick="testNotif()">Send Test Notification</button>
+      </div>
+    </details>
   </div>
   <div class="card"><h2>App Update</h2>
-<p class="muted">Current version: <b>v36</b>. If the Home Screen app ever shows an older layout, close it fully and reopen. This build uses a new service-worker cache so iPhone should fetch the latest files.</p>
+<p class="muted">Current version: <b>v41</b>. If the Home Screen app ever shows an older layout, close it fully and reopen. This build uses a new service-worker cache so iPhone should fetch the latest files.</p>
 <button class="secondary" onclick="forceAppRefresh()">Refresh App Version</button>
 </div>
 <div class="card"><h2>Connected Features</h2><p class="muted">Real AI, food recognition, form analysis, live payments, cloud accounts, social features, push notifications and smartwatch syncing need secure production services. Apple Watch / Health requires native HealthKit integration; Garmin, Fitbit and similar platforms require their supported APIs and user authorization.</p></div>
@@ -711,7 +864,7 @@ nav button{margin:0;border-radius:0;background:transparent;color:#94a3b8;padding
 </div></div><nav>
 <button id="nav_home" class="active" onclick="showScreen('home')">🏠<br>Home</button>
 <button id="nav_workout" onclick="showScreen('workout')">🏋️<br>Workout</button>
-<button id="nav_future" onclick="showScreen('future');setFutureWeek(0)">📅<br>Future</button>
+<button id="nav_nutrition" onclick="showScreen('nutrition');renderNutritionHub()">🥗<br>Nutrition</button>
 <button id="nav_progress" onclick="showScreen('progress')">📈<br>Progress</button>
 <button id="nav_more" onclick="showScreen('more')">•••<br>More</button>
 </nav>
@@ -820,6 +973,7 @@ window.showScreen=function(id){
  if(id==='videos')renderVideoManager();
  if(id==='progress')renderBodyProgress();
  if(id==='membership')loadCloudMembership();
+ if(id==='nutrition')renderNutritionHub();
 };
 window.newMotivation=function(){document.getElementById('motivation').textContent=messages[Math.floor(Math.random()*messages.length)]};
 
@@ -1377,7 +1531,7 @@ window.forceAppRefresh=function(){
    }).then(function(){
      if('caches' in window){
        return caches.keys().then(function(keys){
-         return Promise.all(keys.filter(function(k){return k.indexOf('fittrack-pro-v37')<0}).map(function(k){return caches.delete(k)}));
+         return Promise.all(keys.filter(function(k){return k.indexOf('fittrack-pro-v41')<0}).map(function(k){return caches.delete(k)}));
        });
      }
    }).then(function(){location.reload(true)}).catch(function(){location.reload(true)});
@@ -1578,6 +1732,16 @@ async function initialCloudSync(){
    else{await cloudSave(true);sessionStorage.setItem('fitCloudLoaded',s.user.id);updateCloudUI()}
  }catch(e){authMsg('Signed in, but cloud storage is not ready yet. Run the v28 Supabase setup SQL first.',false)}
 }
+
+function renderHomeNutritionSummary(){
+ var t=getNutritionTargets();
+ if(!t){
+   // Jamie defaults are used only as an editable starting point for a new profile.
+   t={goal:'recomp',sex:'male',age:40,weight:85,height:180,activity:1.375,bmr:1780,maintenance:2448,calories:2200,protein:170,carbs:236,fat:68};
+ }
+ renderNutritionTargets(t);
+}
+
 function updateCloudUI(){
  var s=getFitSession(),signed=!!(s&&s.user),email=signed?(s.user.email||'Signed in'):'';
  var out=document.getElementById('authSignedOut'),inn=document.getElementById('authSignedIn');if(out)out.style.display=signed?'none':'block';if(inn)inn.style.display=signed?'block':'none';
@@ -1605,6 +1769,82 @@ function initCloudAuth(){
  window.addEventListener('pagehide',function(){if(getFitSession())cloudSave(true)});
 }
 
+
+function getNutritionTargets(){
+ try{return JSON.parse(profileStorage.getItem('fitNutritionTargets')||'null')}catch(e){return null}
+}
+function nutritionGoalLabel(g){
+ return g==='lose'?'Lose Fat':g==='gain'?'Build Muscle':g==='maintain'?'Maintain Weight':'Build Muscle + Get Lean';
+}
+function nutritionGoalToMealLabel(g){
+ return g==='lose'?'Lose Fat':g==='gain'?'Build Muscle':g==='maintain'?'Maintain Weight':'Build Muscle + Get Lean';
+}
+function calcNutritionFromInputs(){
+ var sex=(document.getElementById('nutSex')||{}).value||'male';
+ var age=+(document.getElementById('nutAge')||{}).value||40;
+ var weight=+(document.getElementById('nutWeight')||{}).value||85;
+ var height=+(document.getElementById('nutHeight')||{}).value||180;
+ var activity=+(document.getElementById('nutActivity')||{}).value||1.375;
+ var goal=(document.getElementById('nutGoal')||{}).value||'recomp';
+ var bmr=10*weight+6.25*height-5*age+(sex==='male'?5:-161);
+ var maintenance=Math.round(bmr*activity);
+ var factor=goal==='lose'?0.84:goal==='recomp'?0.90:goal==='gain'?1.08:1;
+ var calories=Math.round(maintenance*factor/10)*10;
+ var proteinKg=goal==='lose'||goal==='recomp'?2.0:goal==='gain'?1.8:1.6;
+ var protein=Math.round(weight*proteinKg);
+ var fat=Math.round(weight*(goal==='gain'?0.9:0.8));
+ var carbCalories=calories-protein*4-fat*9;
+ var carbs=Math.max(100,Math.round(carbCalories/4));
+ return {goal:goal,sex:sex,age:age,weight:weight,height:height,activity:activity,bmr:Math.round(bmr),maintenance:maintenance,calories:calories,protein:protein,carbs:carbs,fat:fat,updated_at:new Date().toISOString()};
+}
+window.calculateNutritionTargets=function(save){
+ var t=calcNutritionFromInputs();
+ if(save!==false)profileStorage.setItem('fitNutritionTargets',JSON.stringify(t));
+ renderNutritionTargets(t);
+ return t;
+};
+function renderNutritionTargets(t){
+ if(!t)return;
+ var map={targetCalories:t.calories,targetProtein:t.protein,targetCarbs:t.carbs,targetFat:t.fat,
+          homeNutCalories:t.calories+' kcal',homeNutProtein:t.protein+' g',homeNutCarbs:t.carbs+' g',homeNutGoal:nutritionGoalLabel(t.goal)};
+ Object.keys(map).forEach(function(id){var e=document.getElementById(id);if(e)e.textContent=map[id]});
+ var badge=document.getElementById('nutritionGoalBadge');if(badge)badge.textContent=nutritionGoalLabel(t.goal).toUpperCase();
+ var note=document.getElementById('nutritionTargetNote');if(note)note.textContent='Estimated maintenance: '+t.maintenance+' kcal/day. Recommended starting intake for '+nutritionGoalLabel(t.goal).toLowerCase()+': '+t.calories+' kcal, '+t.protein+' g protein, '+t.carbs+' g carbs and '+t.fat+' g fat.';
+ var prompt=document.getElementById('nutritionMealPrompt');if(prompt)prompt.textContent='Meal plans will target about '+t.calories+' kcal • '+t.protein+' g protein • '+t.carbs+' g carbs for '+nutritionGoalLabel(t.goal)+'.';
+}
+window.renderNutritionHub=function(){
+ var t=getNutritionTargets();
+ if(t){
+   var ids={nutGoal:t.goal,nutSex:t.sex,nutAge:t.age,nutWeight:t.weight,nutHeight:t.height,nutActivity:t.activity};
+   Object.keys(ids).forEach(function(id){var e=document.getElementById(id);if(e)e.value=ids[id]});
+   renderNutritionTargets(t);
+ }else{
+   t=calculateNutritionTargets(true);
+ }
+ calculateCalorieBurn();
+};
+window.calculateCalorieBurn=function(){
+ var t=getNutritionTargets()||calcNutritionFromInputs();
+ var steps=+(document.getElementById('burnSteps')||{}).value||0;
+ var mins=+(document.getElementById('burnMinutes')||{}).value||0;
+ var met=+(document.getElementById('burnType')||{}).value||5;
+ var stepBurn=Math.round(steps*t.weight*0.0005);
+ var workoutBurn=Math.round(met*3.5*t.weight/200*mins);
+ var activityBurn=stepBurn+workoutBurn;
+ var totalDay=Math.round(t.bmr+activityBurn+(t.bmr*0.10));
+ [['burnStepsOut',stepBurn],['burnWorkoutOut',workoutBurn],['burnActivityOut',activityBurn],['burnTotalOut',totalDay]].forEach(function(x){var e=document.getElementById(x[0]);if(e)e.textContent=x[1]});
+ return {steps:stepBurn,workout:workoutBurn,activity:activityBurn,total:totalDay};
+};
+window.applyRecommendedTargetsToMeals=function(){
+ var t=getNutritionTargets()||calculateNutritionTargets(true);
+ var map={mealGoal:nutritionGoalToMealLabel(t.goal),mealCalories:t.calories,mealProtein:t.protein,mealCarbs:t.carbs,mealFat:t.fat};
+ Object.keys(map).forEach(function(id){var e=document.getElementById(id);if(e)e.value=map[id]});
+};
+window.openGoalMealPlanner=function(){
+ showScreen('foodtools');renderMealBuilder();applyRecommendedTargetsToMeals();
+ var card=document.getElementById('mealBuilderCard');if(card)card.scrollIntoView({behavior:'smooth',block:'start'});
+};
+
 var generatedHealthyMeals=null;
 window.renderMealBuilder=function(){
  var saved=null;try{saved=JSON.parse(profileStorage.getItem('fitHealthyMealPlan')||'null')}catch(e){}
@@ -1621,36 +1861,71 @@ function cookMethod(meal,skill){
  if(n.includes('tofu'))return ['Pat tofu dry and cube it.','Pan-sear in a non-stick pan until golden on all sides.','Add vegetables and a reduced-salt sauce.','Serve with measured rice or noodles.'];
  return ['Prepare and measure all ingredients first.','Use grilling, baking, steaming or a non-stick pan rather than deep frying.','Cook protein until safely cooked through and vegetables until just tender.','Plate the measured portion and add herbs, spices, lemon or reduced-salt seasoning for flavour.'];
 }
+
 window.generateHealthyMeals=function(){
- var goal=document.getElementById('mealGoal').value,count=+document.getElementById('mealCount').value,diet=document.getElementById('mealDiet').value,skill=document.getElementById('cookSkill').value,cals=+document.getElementById('mealCalories').value||2000,protein=+document.getElementById('mealProtein').value||150,avoid=(document.getElementById('mealAvoid').value||'').toLowerCase();
- var base=diet==='Vegetarian'?[
+ var goal=document.getElementById('mealGoal').value,count=+document.getElementById('mealCount').value,diet=document.getElementById('mealDiet').value,skill=document.getElementById('cookSkill').value;
+ var cals=+document.getElementById('mealCalories').value||2000,protein=+document.getElementById('mealProtein').value||150,carbs=+document.getElementById('mealCarbs').value||200,fat=+document.getElementById('mealFat').value||65;
+ var avoid=(document.getElementById('mealAvoid').value||'').toLowerCase(),likes=(document.getElementById('mealLikes').value||'').toLowerCase();
+
+ var lean=[
   ['Protein Oats','60 g oats, Greek yoghurt, berries, protein powder'],
-  ['Tofu Rice Bowl','180 g tofu, 1 cup cooked rice, mixed vegetables, reduced-salt soy'],
-  ['Greek Yoghurt Power Bowl','250 g Greek yoghurt, fruit, oats, seeds'],
+  ['Chicken Power Salad','180 g chicken breast, large mixed salad, roasted potato, light dressing'],
+  ['Greek Yoghurt Power Bowl','250 g Greek yoghurt, berries, oats, cinnamon'],
+  ['Lean Beef Rice Bowl','180 g lean beef mince, measured rice, mixed vegetables'],
+  ['Baked Salmon & Greens','180 g salmon, green vegetables, measured potato'],
   ['Egg & Veg Wrap','3 eggs, wholegrain wrap, spinach, tomato'],
-  ['Lentil Pasta Bowl','lentil pasta, tomato sauce, spinach, parmesan']
- ]:[
-  ['Protein Oats','60 g oats, milk, berries, Greek yoghurt or protein powder'],
-  ['Chicken Rice Bowl','180 g chicken breast, 1 cup cooked rice, mixed vegetables'],
-  ['Greek Yoghurt Power Bowl','250 g Greek yoghurt, fruit, oats, cinnamon'],
-  ['Lean Beef Mince Bowl','180 g lean beef mince, potatoes or rice, vegetables'],
-  ['Baked Salmon & Vegetables','180 g salmon, roast vegetables, small potato'],
+  ['Chicken Stir-Fry','180 g chicken, mixed vegetables, measured rice, reduced-salt sauce']
+ ];
+ var muscle=[
+  ['Protein Oats + Banana','80 g oats, milk, banana, Greek yoghurt, protein powder'],
+  ['Chicken Rice Performance Bowl','200 g chicken breast, 1.5 cups cooked rice, vegetables'],
+  ['Greek Yoghurt Recovery Bowl','300 g Greek yoghurt, banana, oats, berries, honey'],
+  ['Lean Beef Pasta','200 g lean beef mince, pasta, tomato sauce, vegetables'],
+  ['Salmon Rice Plate','200 g salmon, rice, vegetables'],
+  ['Egg & Avocado Wrap','4 eggs, wholegrain wrap, avocado, spinach'],
+  ['Chicken Pasta Bowl','200 g chicken, pasta, tomato-based sauce, vegetables']
+ ];
+ var balanced=[
+  ['Protein Oats','60–70 g oats, milk, fruit, Greek yoghurt'],
+  ['Chicken Rice Bowl','180 g chicken breast, rice, mixed vegetables'],
+  ['Greek Yoghurt Bowl','250 g Greek yoghurt, fruit, oats'],
+  ['Lean Beef Bowl','180 g lean beef, potato or rice, vegetables'],
+  ['Salmon & Vegetables','180 g salmon, potato, vegetables'],
   ['Egg & Veg Wrap','3 eggs, wholegrain wrap, spinach, tomato']
  ];
- var safe=base.filter(x=>!avoid||!x.join(' ').toLowerCase().includes(avoid));
+ var veg=[
+  ['Protein Oats','oats, milk, berries, Greek yoghurt or plant protein'],
+  ['Tofu Rice Bowl','200 g tofu, rice, mixed vegetables, reduced-salt soy'],
+  ['Greek Yoghurt Power Bowl','Greek yoghurt, fruit, oats, seeds'],
+  ['Egg & Veg Wrap','3 eggs, wholegrain wrap, spinach, tomato'],
+  ['Lentil Pasta Bowl','lentil pasta, tomato sauce, spinach, parmesan'],
+  ['Tempeh Stir-Fry','tempeh, mixed vegetables, rice, reduced-salt sauce']
+ ];
+
+ var base=diet==='Vegetarian'?veg:(goal==='Build Muscle'?muscle:(goal==='Lose Fat'?lean:balanced));
+ if(goal==='Build Muscle + Get Lean')base=lean.concat(muscle.slice(0,3));
+ var safe=base.filter(function(x){return !avoid||!x.join(' ').toLowerCase().includes(avoid)});
  if(!safe.length)safe=base;
- var per=Math.round(cals/count),pp=Math.round(protein/count),days=[];
- for(var d=0;d<3;d++){
+
+ // Put liked foods earlier where possible without ignoring goal/diet structure.
+ if(likes)safe.sort(function(a,b){return (b.join(' ').toLowerCase().includes(likes)?1:0)-(a.join(' ').toLowerCase().includes(likes)?1:0)});
+
+ var perCal=Math.round(cals/count),perProtein=Math.round(protein/count),perCarbs=Math.round(carbs/count),perFat=Math.round(fat/count),days=[];
+ for(var d=0;d<7;d++){
    var meals=[];
-   for(var i=0;i<count;i++){var m=safe[(i+d)%safe.length];meals.push({name:m[0],ingredients:m[1],calories:per,protein:pp,method:cookMethod({name:m[0]},skill)})}
+   for(var i=0;i<count;i++){
+     var m=safe[(i+d)%safe.length];
+     meals.push({name:m[0],ingredients:m[1],calories:perCal,protein:perProtein,carbs:perCarbs,fat:perFat,method:cookMethod({name:m[0]},skill)});
+   }
    days.push({day:'Day '+(d+1),meals:meals});
  }
- generatedHealthyMeals={goal:goal,diet:diet,calories:cals,protein:protein,cooking_skill:skill,days:days,avoid:avoid,created_at:new Date().toISOString()};
+ generatedHealthyMeals={goal:goal,diet:diet,calories:cals,protein:protein,carbs:carbs,fat:fat,cooking_skill:skill,days:days,avoid:avoid,created_at:new Date().toISOString()};
  renderHealthyMealPlan(generatedHealthyMeals);
 };
+
 function renderHealthyMealPlan(p){
  document.getElementById('healthyMealResult').style.display='block';
- document.getElementById('mealPlanSummary').textContent=p.goal+' • '+p.diet+' • approximately '+p.calories+' kcal and '+p.protein+' g protein/day. Portions are starting targets and can be adjusted.';
+ document.getElementById('mealPlanSummary').textContent=p.goal+' • '+p.diet+' • target approximately '+p.calories+' kcal, '+p.protein+' g protein, '+(p.carbs||'—')+' g carbs and '+(p.fat||'—')+' g fat/day. The food choices and portions are structured around this goal.';
  document.getElementById('mealPlanOutput').innerHTML=p.days.map(function(d){return '<div class="meal-day"><b>'+d.day+'</b>'+d.meals.map(function(m){return '<div class="meal-item"><strong>'+esc(m.name)+'</strong><div class="small">Approx. '+m.calories+' kcal • '+m.protein+' g protein</div><p>'+esc(m.ingredients)+'</p><div class="method-box"><b>How to cook it</b><ol>'+m.method.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol></div></div>'}).join('')+'</div>'}).join('');
  buildBatchPrep(p);
 };
@@ -2107,7 +2382,7 @@ window.applyAIWorkout=function(){
  saveRoutineEdits();profileStorage.removeItem('fitWorkoutDraft');renderWorkout();showScreen('workout');
 };
 function boot(){
- try{updateActiveProfileUI();initCloudAuth();updateExcitementUI();updateAIBuilderMode();updateTodayDashboard();structuredStats();refreshAIContext();loadTodayPlan();renderWeeklySchedule();renderWorkout();renderVideoManager();renderShop();drawTimer();calcRecovery();updateXP();updateDailyCoach();renderFutureDays();maybeShowFirstRun()}
+ try{updateActiveProfileUI();initCloudAuth();updateExcitementUI();updateAIBuilderMode();updateTodayDashboard();structuredStats();refreshAIContext();loadTodayPlan();renderHomeNutritionSummary();renderWeeklySchedule();renderWorkout();renderVideoManager();renderShop();drawTimer();calcRecovery();updateXP();updateDailyCoach();renderFutureDays();maybeShowFirstRun()}
  catch(err){
    var b=document.createElement('div');b.style.cssText='position:fixed;left:10px;right:10px;top:90px;z-index:999;background:#7f1d1d;color:white;padding:12px;border-radius:12px';
    b.textContent='FitTrack startup error: '+err.message;document.body.appendChild(b);
