@@ -235,6 +235,16 @@ details.v41-group button{margin-top:7px}
  .v41-actions{grid-template-columns:1fr 1fr}
 }
 </style>
+
+<style>
+.meal-day-tabs{display:flex;gap:7px;overflow-x:auto;padding-bottom:6px;margin:12px 0}
+.meal-day-tabs button{width:auto;white-space:nowrap;margin:0;padding:9px 12px}
+.meal-day-tabs button.active{outline:2px solid rgba(34,211,238,.45)}
+.meal-day-panel{display:none}
+.meal-day-panel.active{display:block}
+.meal-slot{font-size:11px;font-weight:900;letter-spacing:.05em;opacity:.72;text-transform:uppercase;margin-bottom:4px}
+.meal-day-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0 12px}
+</style>
 </head>
 <body>
 <header><h1>FITTRACK <span style="color:#67e8f9">PRO</span></h1><p>Train smarter. Eat better. Progress faster.</p><div class="profile-chip" onclick="openProfileSwitcher()"><div class="profile-avatar" id="activeProfileAvatar">J</div><div><div class="small">PROFILE</div><div class="profile-name" id="activeProfileName">Jamie</div></div></div></header>
@@ -284,7 +294,7 @@ details.v41-group button{margin-top:7px}
 <div class="card native-ready"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><div><div class="small">HOUSEHOLD MODE</div><h2 id="householdTitle" style="margin:3px 0">Jamie + Wife</h2><p class="muted" style="margin-bottom:0">Tap the profile at the top to switch users. Your fitness data stays separate.</p></div><button class="secondary" onclick="openProfileSwitcher()">Switch</button></div></div>
   <div class="card" style="padding:10px 12px">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
-      <div><b>FitTrack Pro v41</b><div class="small">Cleaner navigation • Smart nutrition • Calorie burn.</div></div>
+      <div><b>FitTrack Pro v41.1</b><div class="small">Cleaner navigation • Smart nutrition • Calorie burn.</div></div>
       <span class="status-pill">UPDATED</span>
     </div>
   </div>
@@ -432,7 +442,7 @@ details.v41-group button{margin-top:7px}
   <div class="card"><h2>Recent Sessions</h2><div id="historyList" class="muted">Complete your first workout to start your history.</div></div>
 </section>
 <section id="progress" class="screen">
-  <div class="card hero"><span class="status-pill">V41 BODY TRANSFORMATION + CLOUD</span><h2 style="margin-top:8px">📈 Progress & Body Transformation</h2><p>Track body weight, measurements, photos and strength together — not the scale alone.</p></div>
+  <div class="card hero"><span class="status-pill">V41.1 BODY TRANSFORMATION + CLOUD</span><h2 style="margin-top:8px">📈 Progress & Body Transformation</h2><p>Track body weight, measurements, photos and strength together — not the scale alone.</p></div>
 
   <div class="card">
     <h2>Transformation Dashboard</h2>
@@ -631,7 +641,7 @@ details.v41-group button{margin-top:7px}
     <label>Foods to avoid / allergies<input id="mealAvoid" placeholder="e.g. peanuts, shellfish"></label>
     <button onclick="generateHealthyMeals()">✨ Create Healthy Meal Plan</button>
   </div>
-  <div class="card" id="healthyMealResult" style="display:none"><h2>Your Healthy Meals</h2><p id="mealPlanSummary" class="muted"></p><div id="mealPlanOutput"></div>
+  <div class="card" id="healthyMealResult" style="display:none"><h2>📅 Your 7-Day Meal Plan</h2><p id="mealPlanSummary" class="muted"></p><div id="mealPlanOutput"></div>
 <div class="prep-batch"><h3>🍱 Batch Prep</h3><div id="batchPrepOutput" class="small">Generate your meals to see batch-cooking instructions.</div></div>
 <div class="prep-batch"><h3>🛒 Shopping Quantities</h3><div id="shoppingOutput" class="small">Your shopping list will appear here.</div></div>
 <button class="secondary" onclick="saveHealthyMeals()">Save Meal Plan</button></div>
@@ -1911,24 +1921,54 @@ window.generateHealthyMeals=function(){
  if(likes)safe.sort(function(a,b){return (b.join(' ').toLowerCase().includes(likes)?1:0)-(a.join(' ').toLowerCase().includes(likes)?1:0)});
 
  var perCal=Math.round(cals/count),perProtein=Math.round(protein/count),perCarbs=Math.round(carbs/count),perFat=Math.round(fat/count),days=[];
+ var dayNames=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+ var slotNames=count===3?['Breakfast','Lunch','Dinner']:
+               count===4?['Breakfast','Lunch','Snack','Dinner']:
+               ['Breakfast','Morning Snack','Lunch','Afternoon Snack','Dinner'];
  for(var d=0;d<7;d++){
    var meals=[];
    for(var i=0;i<count;i++){
      var m=safe[(i+d)%safe.length];
-     meals.push({name:m[0],ingredients:m[1],calories:perCal,protein:perProtein,carbs:perCarbs,fat:perFat,method:cookMethod({name:m[0]},skill)});
+     meals.push({slot:slotNames[i]||('Meal '+(i+1)),name:m[0],ingredients:m[1],calories:perCal,protein:perProtein,carbs:perCarbs,fat:perFat,method:cookMethod({name:m[0]},skill)});
    }
-   days.push({day:'Day '+(d+1),meals:meals});
+   days.push({day:dayNames[d],day_number:d+1,meals:meals});
  }
  generatedHealthyMeals={goal:goal,diet:diet,calories:cals,protein:protein,carbs:carbs,fat:fat,cooking_skill:skill,days:days,avoid:avoid,created_at:new Date().toISOString()};
  renderHealthyMealPlan(generatedHealthyMeals);
 };
 
+
+var activeMealPlanDay=0;
+window.selectMealPlanDay=function(idx){
+ activeMealPlanDay=idx;
+ document.querySelectorAll('.meal-day-tabs button').forEach(function(b,i){b.classList.toggle('active',i===idx)});
+ document.querySelectorAll('.meal-day-panel').forEach(function(p,i){p.classList.toggle('active',i===idx)});
+};
 function renderHealthyMealPlan(p){
  document.getElementById('healthyMealResult').style.display='block';
- document.getElementById('mealPlanSummary').textContent=p.goal+' • '+p.diet+' • target approximately '+p.calories+' kcal, '+p.protein+' g protein, '+(p.carbs||'—')+' g carbs and '+(p.fat||'—')+' g fat/day. The food choices and portions are structured around this goal.';
- document.getElementById('mealPlanOutput').innerHTML=p.days.map(function(d){return '<div class="meal-day"><b>'+d.day+'</b>'+d.meals.map(function(m){return '<div class="meal-item"><strong>'+esc(m.name)+'</strong><div class="small">Approx. '+m.calories+' kcal • '+m.protein+' g protein</div><p>'+esc(m.ingredients)+'</p><div class="method-box"><b>How to cook it</b><ol>'+m.method.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol></div></div>'}).join('')+'</div>'}).join('');
- buildBatchPrep(p);
-};
+ document.getElementById('mealPlanSummary').textContent=p.goal+' • '+p.diet+' • target approximately '+p.calories+' kcal, '+p.protein+' g protein, '+(p.carbs||'—')+' g carbs and '+(p.fat||'—')+' g fat/day. Select each day below to see the full meal schedule.';
+ var tabs='<div class="meal-day-tabs">'+p.days.map(function(d,i){return '<button class="'+(i===0?'active':'')+'" onclick="selectMealPlanDay('+i+')">'+esc(d.day)+'</button>'}).join('')+'</div>';
+ var panels=p.days.map(function(d,di){
+   var totals=d.meals.reduce(function(a,m){a.c+=(+m.calories||0);a.p+=(+m.protein||0);a.cb+=(+m.carbs||0);a.f+=(+m.fat||0);return a},{c:0,p:0,cb:0,f:0});
+   return '<div class="meal-day-panel '+(di===0?'active':'')+'">'+
+     '<div class="meal-day-heading"><div><div class="small">DAY '+(d.day_number||di+1)+'</div><h2 style="margin:2px 0">'+esc(d.day)+'</h2></div>'+
+     '<span class="fitness-badge">'+Math.round(totals.c)+' KCAL</span></div>'+
+     d.meals.map(function(m,mi){
+       return '<div class="meal-item">'+
+         '<div class="meal-slot">'+esc(m.slot||('Meal '+(mi+1)))+'</div>'+
+         '<strong>'+esc(m.name)+'</strong>'+
+         '<div class="small">Approx. '+m.calories+' kcal • '+m.protein+' g protein • '+(m.carbs||'—')+' g carbs • '+(m.fat||'—')+' g fat</div>'+
+         '<p>'+esc(m.ingredients)+'</p>'+
+         '<div class="method-box"><b>How to cook it</b><ol>'+m.method.map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'</ol></div>'+
+       '</div>';
+     }).join('')+
+     '<div class="v41-goal-note small"><b>'+esc(d.day)+' daily total:</b> '+Math.round(totals.c)+' kcal • '+Math.round(totals.p)+' g protein • '+Math.round(totals.cb)+' g carbs • '+Math.round(totals.f)+' g fat</div>'+
+   '</div>';
+ }).join('');
+ document.getElementById('mealPlanOutput').innerHTML=tabs+panels;
+ activeMealPlanDay=0;
+}
+
 window.saveHealthyMeals=function(){if(!generatedHealthyMeals)return;profileStorage.setItem('fitHealthyMealPlan',JSON.stringify(generatedHealthyMeals));alert('Healthy meal plan saved to this profile.');if(typeof cloudSave==='function'&&getFitSession&&getFitSession())cloudSave(true)};
 
 function getCurrentWorkoutName(){
